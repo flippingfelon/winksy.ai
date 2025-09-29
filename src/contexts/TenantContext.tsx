@@ -59,8 +59,13 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
-  // Load available tenants
+  // Load available tenants - only if Supabase is properly configured
   useEffect(() => {
+    // Skip loading if we're using placeholder values (build time)
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co') {
+      return
+    }
+
     async function loadTenants() {
       try {
         const { data, error } = await supabase
