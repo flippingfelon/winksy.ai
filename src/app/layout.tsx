@@ -16,8 +16,37 @@ export const metadata: Metadata = {
   title: "Winksy.ai - AI Lash Extension App",
   description: "Free AI-powered app connecting lash professionals with consumers. Get celebrity lash matches, book appointments, and earn rewards!",
   manifest: "/manifest.json",
-  themeColor: "#000000",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+  themeColor: "#a855f7",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Winksy.ai"
+  },
+  formatDetection: {
+    telephone: false
+  },
+  openGraph: {
+    title: "Winksy.ai - AI Lash Extension App",
+    description: "Free AI-powered app for lash extensions. Get celebrity matches, book appointments, earn rewards!",
+    url: "https://winksy.ai",
+    siteName: "Winksy.ai",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630
+      }
+    ],
+    locale: "en_US",
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Winksy.ai - AI Lash Extension App",
+    description: "Free AI-powered app for lash extensions",
+    images: ["/twitter-image.png"]
+  }
 };
 
 export default function RootLayout({
