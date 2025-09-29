@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Sparkles, Mail, Lock, User, Eye, EyeOff, Users, Briefcase, Building } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useTenant, Tenant } from '@/contexts/TenantContext'
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function SignUp() {
-  const router = useRouter()
   const { signUp } = useAuth()
-  const { tenants, tenant, setTenantById } = useTenant()
+  const { tenants, setTenantById } = useTenant()
 
   const [userType, setUserType] = useState<'consumer' | 'tech'>('consumer')
   const [selectedTenantId, setSelectedTenantId] = useState<string>('')
@@ -59,8 +57,8 @@ export default function SignUp() {
       setTenantById(selectedTenantId)
 
       // Success message will be shown by the auth context
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
     }

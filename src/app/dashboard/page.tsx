@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -33,7 +34,6 @@ interface UserProfile {
 }
 
 export default function Dashboard() {
-  const router = useRouter()
   const { user: authUser, signOut } = useAuth()
   const { tenant } = useTenant()
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -140,7 +140,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
             <h2 className="text-3xl font-bold mb-2">Welcome back, {profile?.full_name || 'User'}! 👋</h2>
-            <p className="text-gray-600">You're doing great! Keep up the streak!</p>
+            <p className="text-gray-600">You&apos;re doing great! Keep up the streak!</p>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
@@ -157,9 +157,11 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 {tenant.logo_url ? (
-                  <img
+                  <Image
                     src={tenant.logo_url}
                     alt={tenant.name}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-lg object-cover"
                   />
                 ) : (
@@ -270,7 +272,7 @@ export default function Dashboard() {
 
         {/* Daily Challenges */}
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h3 className="text-xl font-bold mb-6">Today's Challenges</h3>
+          <h3 className="text-xl font-bold mb-6">Today&apos;s Challenges</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl">
               <div className="flex items-center space-x-4">

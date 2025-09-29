@@ -85,7 +85,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadTenants()
-  }, [])
+  }, [supabase, tenant])
 
   const setTenantById = (id: string) => {
     const foundTenant = tenants.find(t => t.id === id)
@@ -133,7 +133,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     if (storedTenantId && storedTenantId !== 'demo-tenant-id') {
       setTenantById(storedTenantId)
     }
-  }, [tenants])
+  }, [tenants, setTenantById])
 
   return (
     <TenantContext.Provider

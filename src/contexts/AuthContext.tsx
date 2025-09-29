@@ -13,7 +13,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>
   signInWithProvider: (provider: 'google' | 'facebook') => Promise<void>
   signOut: () => Promise<void>
-  updateProfile: (data: any) => Promise<void>
+  updateProfile: (data: Record<string, unknown>) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [supabase.auth])
 
   const signUp = async (email: string, password: string, fullName: string, userType: 'consumer' | 'tech', tenantId?: string) => {
     try {
@@ -70,8 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         router.push('/dashboard')
       }
-    } catch (error: any) {
-      throw new Error(error.message)
+    } catch (error: unknown) {
+      throw new Error(error instanceof Error ? error.message : 'Sign up failed')
     }
   }
 
@@ -87,8 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         router.push('/dashboard')
       }
-    } catch (error: any) {
-      throw new Error(error.message)
+    } catch (error: unknown) {
+      throw new Error(error instanceof Error ? error.message : 'Sign up failed')
     }
   }
 
@@ -108,8 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error
 
       // OAuth will redirect automatically
-    } catch (error: any) {
-      throw new Error(error.message)
+    } catch (error: unknown) {
+      throw new Error(error instanceof Error ? error.message : 'Sign up failed')
     }
   }
 
@@ -118,12 +118,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       router.push('/')
-    } catch (error: any) {
-      throw new Error(error.message)
+    } catch (error: unknown) {
+      throw new Error(error instanceof Error ? error.message : 'Sign up failed')
     }
   }
 
-  const updateProfile = async (data: any) => {
+  const updateProfile = async (data: Record<string, unknown>) => {
     try {
       if (!user) throw new Error('No user logged in')
 
@@ -133,8 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', user.id)
 
       if (error) throw error
-    } catch (error: any) {
-      throw new Error(error.message)
+    } catch (error: unknown) {
+      throw new Error(error instanceof Error ? error.message : 'Sign up failed')
     }
   }
 

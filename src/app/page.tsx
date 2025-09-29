@@ -1,17 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { 
-  Sparkles, 
-  Trophy, 
-  Gift, 
-  Camera, 
-  Calendar, 
-  ShoppingBag,
+import {
+  Sparkles,
+  Trophy,
+  Gift,
+  Camera,
   Users,
   Star,
   Zap,
-  DollarSign,
   Target,
   Smartphone,
   Check,
@@ -87,7 +84,7 @@ export default function Home() {
               </button>
               <button className="bg-white text-gray-900 border-2 border-gray-200 px-8 py-4 rounded-full text-lg font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-shadow">
                 <Users className="w-5 h-5" />
-                <span>I'm a Lash Tech</span>
+                <span>I&apos;m a Lash Tech</span>
               </button>
             </div>
 
