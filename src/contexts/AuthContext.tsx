@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
-  signUp: (email: string, password: string, fullName: string, userType: 'consumer' | 'tech') => Promise<void>
+  signUp: (email: string, password: string, fullName: string, userType: 'consumer' | 'tech', tenantId?: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signInWithProvider: (provider: 'google' | 'facebook') => Promise<void>
   signOut: () => Promise<void>
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithProvider = async (provider: 'google' | 'facebook') => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,

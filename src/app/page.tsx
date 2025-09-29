@@ -7,11 +7,9 @@ import {
   Gift,
   Camera,
   Users,
-  Star,
   Zap,
   Target,
   Smartphone,
-  Check,
   ArrowRight,
 } from 'lucide-react'
 

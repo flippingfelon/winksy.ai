@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/utils/supabase'
 
 interface Tenant {
@@ -87,14 +87,14 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     loadTenants()
   }, [supabase, tenant])
 
-  const setTenantById = (id: string) => {
+  const setTenantById = useCallback((id: string) => {
     const foundTenant = tenants.find(t => t.id === id)
     if (foundTenant) {
       setTenant(foundTenant)
       // Store in localStorage for persistence
       localStorage.setItem('selectedTenantId', id)
     }
-  }
+  }, [tenants])
 
   const setTenantBySlug = (slug: string) => {
     const foundTenant = tenants.find(t => t.slug === slug)
