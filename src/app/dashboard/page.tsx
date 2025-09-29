@@ -1,11 +1,15 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  Sparkles, 
-  Trophy, 
-  Gift, 
+import { useAuth } from '@/contexts/AuthContext'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { createClient } from '@/utils/supabase'
+import {
+  Sparkles,
+  Trophy,
+  Gift,
   Calendar,
   TrendingUp,
   Star,
@@ -17,27 +21,68 @@ import {
   Bell
 } from 'lucide-react'
 
+interface UserProfile {
+  id: string
+  full_name: string
+  email: string
+  user_type: 'consumer' | 'tech'
+  points: number
+  level: string
+  created_at: string
+}
+
 export default function Dashboard() {
   const router = useRouter()
-  
-  // Mock user data - replace with actual Supabase data
-  const user = {
-    name: 'Jane Doe',
-    email: 'jane@example.com',
-    points: 2500,
-    level: 'Enthusiast',
-    streak: 7,
-    nextLevelPoints: 5000,
-    userType: 'consumer' // or 'tech'
+  const { user: authUser, signOut } = useAuth()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    async function fetchUserProfile() {
+      if (authUser?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .single()
+
+          if (error) throw error
+          setProfile(data)
+        } catch (error) {
+          console.error('Error fetching profile:', error)
+        } finally {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchUserProfile()
+  }, [authUser, supabase])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
-  const handleSignOut = () => {
-    // TODO: Implement Supabase sign out
-    router.push('/')
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -92,12 +137,12 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Welcome back, {user.name}! 👋</h2>
-              <p className="text-gray-600">You're doing great! Keep up the streak!</p>
+            <h2 className="text-3xl font-bold mb-2">Welcome back, {profile?.full_name || 'User'}! 👋</h2>
+            <p className="text-gray-600">You're doing great! Keep up the streak!</p>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                {user.points.toLocaleString()}
+                {profile?.points?.toLocaleString() || '0'}
               </div>
               <p className="text-sm text-gray-600 mt-1">Total Points</p>
             </div>
@@ -245,5 +290,6 @@ export default function Dashboard() {
         </div>
       </main>
     </div>
+    </ProtectedRoute>
   )
 }

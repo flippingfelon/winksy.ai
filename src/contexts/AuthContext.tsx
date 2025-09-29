@@ -60,24 +60,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error
 
-      // Create profile in database
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email,
-            full_name: fullName,
-            user_type: userType,
-            points: 1000, // Welcome bonus
-            level: 'Newbie',
-            created_at: new Date().toISOString(),
-          })
+      // Create profile in database (this will be handled by the database trigger)
+      // The profile creation is now automated via the database trigger in supabase-schema.sql
 
-        if (profileError) console.error('Profile creation error:', profileError)
+      if (data.user && !data.user.email_confirmed_at) {
+        // User needs to confirm email
+        alert('Please check your email to confirm your account!')
+      } else {
+        router.push('/dashboard')
       }
-
-      router.push('/dashboard')
     } catch (error: any) {
       throw new Error(error.message)
     }
@@ -85,13 +76,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (error) throw error
-      router.push('/dashboard')
+
+      if (data.user) {
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       throw new Error(error.message)
     }
@@ -99,14 +93,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithProvider = async (provider: 'google' | 'facebook') => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       })
 
       if (error) throw error
+
+      // OAuth will redirect automatically
     } catch (error: any) {
       throw new Error(error.message)
     }
