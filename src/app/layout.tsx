@@ -17,7 +17,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Winksy.ai - AI Lash Extension App",
   description: "Free AI-powered app connecting lash professionals with consumers. Get celebrity lash matches, book appointments, and earn rewards!",
-  manifest: "/manifest.json",
   themeColor: "#a855f7",
   viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   appleWebApp: {
