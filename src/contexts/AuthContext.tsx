@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = async (email: string, password: string, fullName: string, userType: 'consumer' | 'tech') => {
+  const signUp = async (email: string, password: string, fullName: string, userType: 'consumer' | 'tech', tenantId?: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -54,14 +54,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             full_name: fullName,
             user_type: userType,
+            tenant_id: tenantId || 'demo-tenant-id', // Default to demo tenant for now
           },
         },
       })
 
       if (error) throw error
 
-      // Create profile in database (this will be handled by the database trigger)
-      // The profile creation is now automated via the database trigger in supabase-schema.sql
+      // The profile creation is now automated via the database trigger
+      // which includes tenant assignment and admin role creation
 
       if (data.user && !data.user.email_confirmed_at) {
         // User needs to confirm email

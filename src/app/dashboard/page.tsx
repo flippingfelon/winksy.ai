@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTenant } from '@/contexts/TenantContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { createClient } from '@/utils/supabase'
 import {
@@ -34,6 +35,7 @@ interface UserProfile {
 export default function Dashboard() {
   const router = useRouter()
   const { user: authUser, signOut } = useAuth()
+  const { tenant } = useTenant()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -148,6 +150,43 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Tenant Info */}
+        {tenant && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                {tenant.logo_url ? (
+                  <img
+                    src={tenant.logo_url}
+                    alt={tenant.name}
+                    className="w-12 h-12 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{tenant.name}</h3>
+                  <p className="text-sm text-gray-600">{tenant.description}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                  tenant.subscription_tier === 'pro'
+                    ? 'bg-purple-100 text-purple-800'
+                    : tenant.subscription_tier === 'enterprise'
+                    ? 'bg-pink-100 text-pink-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {tenant.subscription_tier.toUpperCase()}
+                </span>
+                <p className="text-xs text-gray-500 mt-1">Subscription</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">

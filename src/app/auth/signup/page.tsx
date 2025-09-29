@@ -1,13 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Sparkles, Mail, Lock, User, Eye, EyeOff, Users, Briefcase } from 'lucide-react'
+import { Sparkles, Mail, Lock, User, Eye, EyeOff, Users, Briefcase, Building } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useTenant, Tenant } from '@/contexts/TenantContext'
 
 export default function SignUp() {
   const router = useRouter()
+  const { signUp } = useAuth()
+  const { tenants, tenant, setTenantById } = useTenant()
+
   const [userType, setUserType] = useState<'consumer' | 'tech'>('consumer')
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,6 +21,13 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Set default tenant on component mount
+  useEffect(() => {
+    if (tenants.length > 0 && !selectedTenantId) {
+      setSelectedTenantId(tenants[0].id)
+    }
+  }, [tenants, selectedTenantId])
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,11 +46,24 @@ export default function SignUp() {
       return
     }
 
-    // TODO: Implement Supabase authentication
-    // For now, just simulate a signup
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 1000)
+    if (!selectedTenantId) {
+      setError('Please select a studio')
+      setLoading(false)
+      return
+    }
+
+    try {
+      await signUp(email, password, fullName, userType, selectedTenantId)
+
+      // Set the selected tenant in context
+      setTenantById(selectedTenantId)
+
+      // Success message will be shown by the auth context
+    } catch (error: any) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSocialSignUp = (provider: 'google' | 'facebook') => {
@@ -100,6 +126,35 @@ export default function SignUp() {
                 <span className="text-xs text-gray-500 mt-1">Grow business</span>
               </button>
             </div>
+          </div>
+
+          {/* Tenant Selection */}
+          <div className="mb-6">
+            <label htmlFor="tenant" className="block text-sm font-medium text-gray-700 mb-1">
+              Select Your Lash Studio
+            </label>
+            <div className="relative">
+              <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <select
+                id="tenant"
+                value={selectedTenantId}
+                onChange={(e) => setSelectedTenantId(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                required
+              >
+                <option value="">Choose a studio...</option>
+                {tenants.map((tenant) => (
+                  <option key={tenant.id} value={tenant.id}>
+                    {tenant.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedTenantId && (
+              <p className="text-sm text-gray-600 mt-1">
+                {tenants.find(t => t.id === selectedTenantId)?.description}
+              </p>
+            )}
           </div>
 
           {/* Social Sign Up */}
