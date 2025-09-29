@@ -29,6 +29,8 @@ interface UserProfile {
   user_type: 'consumer' | 'tech'
   points: number
   level: string
+  nextLevelPoints?: number
+  streak?: number
   created_at: string
 }
 
@@ -196,16 +198,16 @@ export default function Dashboard() {
               <Trophy className="w-8 h-8 text-purple-600" />
               <span className="text-sm font-medium text-gray-500">Level</span>
             </div>
-            <div className="text-2xl font-bold">{user.level}</div>
+            <div className="text-2xl font-bold">{profile?.level}</div>
             <div className="mt-2">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>{user.points} pts</span>
-                <span>{user.nextLevelPoints} pts</span>
+                <span>{profile?.points} pts</span>
+                <span>{profile?.nextLevelPoints || 1000} pts</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-gradient-to-r from-pink-500 to-purple-600 h-2 rounded-full"
-                  style={{ width: `${(user.points / user.nextLevelPoints) * 100}%` }}
+                  style={{ width: `${profile?.nextLevelPoints ? (profile.points / profile.nextLevelPoints) * 100 : 50}%` }}
                 />
               </div>
             </div>
@@ -216,7 +218,7 @@ export default function Dashboard() {
               <Target className="w-8 h-8 text-pink-600" />
               <span className="text-sm font-medium text-gray-500">Daily Streak</span>
             </div>
-            <div className="text-2xl font-bold">{user.streak} Days</div>
+            <div className="text-2xl font-bold">{profile?.streak || 0} Days</div>
             <p className="text-sm text-gray-600 mt-2">Keep it going! 🔥</p>
           </div>
 
