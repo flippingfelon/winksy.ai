@@ -6,7 +6,9 @@ import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { RoleSwitcher } from '@/components/RoleSwitcher'
 import { createClient } from '@/utils/supabase'
+import { Profile } from '@/types/database'
 import {
   Sparkles,
   Trophy,
@@ -22,22 +24,10 @@ import {
   Bell
 } from 'lucide-react'
 
-interface UserProfile {
-  id: string
-  full_name: string
-  email: string
-  user_type: 'consumer' | 'tech'
-  points: number
-  level: string
-  nextLevelPoints?: number
-  streak?: number
-  created_at: string
-}
-
 export default function Dashboard() {
   const { user: authUser, signOut } = useAuth()
   const { tenant } = useTenant()
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -51,10 +41,42 @@ export default function Dashboard() {
             .eq('id', authUser.id)
             .single()
 
-          if (error) throw error
-          setProfile(data)
+          if (error) {
+            // If profile doesn't exist, create it
+            if (error.code === 'PGRST116') {
+              console.log('Profile not found, creating one...', error)
+              const { data: newProfile, error: createError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: authUser.id,
+                  email: authUser.email,
+                  full_name: authUser.user_metadata?.full_name || 'User',
+                  roles: ['consumer'],
+                  active_role: 'consumer',
+                  level: 'Newbie',
+                  points: 0,
+                  streak: 0,
+                  next_level_points: 1000
+                })
+                .select()
+                .single()
+
+              if (createError) {
+                console.error('Error creating profile:', createError)
+                throw createError
+              }
+              console.log('Profile created successfully:', newProfile)
+              setProfile(newProfile)
+            } else {
+              console.error('Error fetching profile:', error)
+              throw error
+            }
+          } else {
+            console.log('Profile loaded successfully:', data)
+            setProfile(data)
+          }
         } catch (error) {
-          console.error('Error fetching profile:', error)
+          console.error('Error fetching/creating profile:', error)
         } finally {
           setLoading(false)
         }
@@ -64,6 +86,13 @@ export default function Dashboard() {
     fetchUserProfile()
   }, [authUser, supabase])
 
+  // Redirect tech users to tech dashboard
+  useEffect(() => {
+    if (profile && profile.active_role === 'tech') {
+      window.location.href = '/dashboard/tech'
+    }
+  }, [profile])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
@@ -72,6 +101,31 @@ export default function Dashboard() {
           <p className="text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
+    )
+  }
+
+  // If profile is still null after loading, show error state
+  if (!profile) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto px-4">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to load profile</h2>
+            <p className="text-gray-600 mb-4">There was an issue loading your profile data. Please try refreshing the page.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transition-shadow"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </ProtectedRoute>
     )
   }
 
@@ -99,13 +153,14 @@ export default function Dashboard() {
               </h1>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
-                <Bell className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
-                <Settings className="w-5 h-5" />
-              </button>
+              <div className="flex items-center space-x-4">
+                {profile && <RoleSwitcher profile={profile} />}
+                <button className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
+                  <Bell className="w-5 h-5" />
+                </button>
+                <Link href="/dashboard/settings" className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
+                  <Settings className="w-5 h-5" />
+                </Link>
               <div className="relative group">
                 <button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
                   <div className="w-8 h-8 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center">
@@ -113,10 +168,10 @@ export default function Dashboard() {
                   </div>
                 </button>
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <Link href="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  <Link href="/dashboard/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                     Profile
                   </Link>
-                  <Link href="/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  <Link href="/dashboard/settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                     Settings
                   </Link>
                   <hr className="my-2" />
@@ -202,12 +257,12 @@ export default function Dashboard() {
             <div className="mt-2">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
                 <span>{profile?.points} pts</span>
-                <span>{profile?.nextLevelPoints || 1000} pts</span>
+                <span>{profile?.next_level_points || 1000} pts</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-gradient-to-r from-pink-500 to-purple-600 h-2 rounded-full"
-                  style={{ width: `${profile?.nextLevelPoints ? (profile.points / profile.nextLevelPoints) * 100 : 50}%` }}
+                  style={{ width: `${profile?.next_level_points ? (profile.points / profile.next_level_points) * 100 : 50}%` }}
                 />
               </div>
             </div>

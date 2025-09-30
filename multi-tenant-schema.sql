@@ -291,3 +291,9 @@ INSERT INTO public.tenants (
 
 -- To assign existing profiles to the demo tenant:
 -- UPDATE public.profiles SET tenant_id = (SELECT id FROM public.tenants WHERE slug = 'demo-studio') WHERE tenant_id IS NULL;
+
+
+
+
+
+

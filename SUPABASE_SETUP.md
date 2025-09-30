@@ -106,3 +106,9 @@ If you get connection errors:
 
 - [Supabase Docs](https://supabase.com/docs)
 - [Next.js + Supabase Guide](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs)
+
+
+
+
+
+

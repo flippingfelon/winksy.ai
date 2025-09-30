@@ -38,3 +38,9 @@ echo "3. Add environment variables from .env.local"
 echo "4. Deploy!"
 echo ""
 echo "See DEPLOYMENT_GUIDE.md for detailed instructions."
+
+
+
+
+
+

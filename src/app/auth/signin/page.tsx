@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import { Sparkles, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
 export default function SignIn() {
-  const router = useRouter()
+  const { signIn, signInWithProvider } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -18,16 +18,25 @@ export default function SignIn() {
     setLoading(true)
     setError('')
 
-    // TODO: Implement Supabase authentication
-    // For now, just simulate a login
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 1000)
+    try {
+      console.log('Attempting to sign in with:', email)
+      await signIn(email, password)
+      console.log('Sign in successful, redirecting to dashboard')
+      // AuthContext will handle the redirect to dashboard
+    } catch (err) {
+      console.error('Sign in error:', err)
+      setError(err instanceof Error ? err.message : 'Sign in failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleSocialSignIn = (provider: 'google' | 'facebook') => {
-    // TODO: Implement social authentication
-    console.log(`Sign in with ${provider}`)
+  const handleSocialSignIn = async (provider: 'google' | 'facebook') => {
+    try {
+      await signInWithProvider(provider)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Social sign in failed')
+    }
   }
 
   return (

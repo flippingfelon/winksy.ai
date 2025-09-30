@@ -2,25 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/utils/supabase'
-
-interface Tenant {
-  id: string
-  name: string
-  slug: string
-  description?: string
-  logo_url?: string
-  primary_color: string
-  secondary_color: string
-  website_url?: string
-  contact_email?: string
-  contact_phone?: string
-  address?: string
-  timezone: string
-  currency: string
-  is_active: boolean
-  subscription_tier: string
-  features_enabled: Record<string, boolean>
-}
+import { Tenant } from '@/types/database'
 
 interface TenantContextType {
   tenant: Tenant | null
@@ -39,8 +21,13 @@ const DEMO_TENANT: Tenant = {
   name: 'Demo Lash Studio',
   slug: 'demo-studio',
   description: 'A beautiful lash studio for demo purposes',
+  logo_url: null,
   primary_color: '#a855f7',
   secondary_color: '#ec4899',
+  website_url: null,
+  contact_email: null,
+  contact_phone: null,
+  address: null,
   timezone: 'UTC',
   currency: 'USD',
   is_active: true,
@@ -51,6 +38,8 @@ const DEMO_TENANT: Tenant = {
     custom_branding: true,
     api_access: true,
   },
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 }
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {

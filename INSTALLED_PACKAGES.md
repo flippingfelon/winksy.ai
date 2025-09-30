@@ -189,3 +189,6 @@ npm install package-name@latest
 6. Configure testing environment
 
 All packages are ready for development! 🚀
+
+
+

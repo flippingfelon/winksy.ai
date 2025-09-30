@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -17,8 +17,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Winksy.ai - AI Lash Extension App",
   description: "Free AI-powered app connecting lash professionals with consumers. Get celebrity lash matches, book appointments, and earn rewards!",
-  themeColor: "#a855f7",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -48,6 +46,13 @@ export const metadata: Metadata = {
     description: "Free AI-powered app for lash extensions",
     images: ["/twitter-image.png"]
   }
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#a855f7"
 };
 
 export default function RootLayout({

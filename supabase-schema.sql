@@ -2,7 +2,6 @@
 -- Run this in your Supabase SQL editor
 
 -- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret-here';
 
 -- Users table (extends Supabase auth.users)
 CREATE TABLE public.profiles (
@@ -10,9 +9,14 @@ CREATE TABLE public.profiles (
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
   avatar_url TEXT,
-  user_type TEXT CHECK (user_type IN ('user', 'tech')) DEFAULT 'user',
+  roles TEXT[] DEFAULT ARRAY['consumer'],
+  active_role TEXT DEFAULT 'consumer',
+  level TEXT DEFAULT 'Newbie',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT valid_roles CHECK (roles <@ ARRAY['consumer', 'tech']),
+  CONSTRAINT valid_active_role CHECK (active_role IN ('consumer', 'tech')),
+  CONSTRAINT active_role_in_roles CHECK (active_role = ANY(roles))
 );
 
 -- Lash Technicians table
@@ -99,6 +103,33 @@ CREATE TABLE public.reviews (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Tenants table (represents different lash studios/businesses)
+CREATE TABLE public.tenants (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL, -- for subdomains: studio-slug.winksy.ai
+  description TEXT,
+  logo_url TEXT,
+  primary_color TEXT DEFAULT '#a855f7', -- hex color for branding
+  secondary_color TEXT DEFAULT '#ec4899',
+  website_url TEXT,
+  contact_email TEXT,
+  contact_phone TEXT,
+  address TEXT,
+  timezone TEXT DEFAULT 'UTC',
+  currency TEXT DEFAULT 'USD',
+  is_active BOOLEAN DEFAULT TRUE,
+  subscription_tier TEXT DEFAULT 'free', -- free, pro, enterprise
+  features_enabled JSONB DEFAULT '{
+    "bookings": true,
+    "analytics": false,
+    "custom_branding": false,
+    "api_access": false
+  }'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable Row Level Security
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lash_techs ENABLE ROW LEVEL SECURITY;
@@ -107,6 +138,7 @@ ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.points ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_levels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
 -- Profiles: Users can read all profiles, but only update their own
@@ -169,6 +201,10 @@ CREATE POLICY "Users can create reviews for their bookings" ON public.reviews
     )
   );
 
+-- Tenants: Public read, only authenticated users can view active tenants
+CREATE POLICY "Active tenants are viewable by everyone" ON public.tenants
+  FOR SELECT USING (is_active = true);
+
 -- Functions and Triggers
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
@@ -196,12 +232,30 @@ CREATE TRIGGER handle_updated_at_user_levels
   BEFORE UPDATE ON public.user_levels
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+CREATE TRIGGER handle_updated_at_tenants
+  BEFORE UPDATE ON public.tenants
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 -- Function to create profile on user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  user_roles TEXT[];
+  default_role TEXT;
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name)
-  VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name');
+  -- Check if user metadata specifies roles
+  user_roles := CASE
+    WHEN NEW.raw_user_meta_data->>'user_type' = 'tech' THEN ARRAY['consumer', 'tech']
+    ELSE ARRAY['consumer']
+  END;
+
+  default_role := CASE
+    WHEN NEW.raw_user_meta_data->>'user_type' = 'tech' THEN 'tech'
+    ELSE 'consumer'
+  END;
+
+  INSERT INTO public.profiles (id, email, full_name, roles, active_role)
+  VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name', user_roles, default_role);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

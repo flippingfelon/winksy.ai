@@ -83,18 +83,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('AuthContext: Signing in with:', email)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('AuthContext: Sign in error:', error)
+        throw error
+      }
 
       if (data.user) {
+        console.log('AuthContext: Sign in successful, user:', data.user.id)
         router.push('/dashboard')
+      } else {
+        console.error('AuthContext: No user data returned')
       }
     } catch (error: unknown) {
-      throw new Error(error instanceof Error ? error.message : 'Sign up failed')
+      console.error('AuthContext: Sign in failed:', error)
+      throw new Error(error instanceof Error ? error.message : 'Sign in failed')
     }
   }
 

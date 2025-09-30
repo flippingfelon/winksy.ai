@@ -87,3 +87,9 @@ if (fs.existsSync(envPath)) {
 } else {
   console.log('\n⚠️  No .env.local file found. You need to create one!\n');
 }
+
+
+
+
+
+

@@ -10,7 +10,7 @@
     "mcp:start": "cd ../mcp-server && npm start",
     "mcp:test": "cd ../mcp-server && npm test",
     "mcp:interactive": "cd ../mcp-server && node test-mcp.js",
-    "mcp:stats": "cd ../mcp-server && node -r dotenv/config -e \"const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY); supabase.rpc('get_database_stats').then(r => console.log(JSON.stringify(r, null, 2))).catch(console.error)\"",
+    "mcp:stats": "cd ../mcp-server && NEXT_PUBLIC_SUPABASE_URL=https://ixtfidglwgmapwcgdhlq.supabase.co SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4dGZpZGdsd2dtYXB3Y2dkaGxxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTA5NTY4NywiZXhwIjoyMDc0NjcxNjg3fQ.neCKI0h4rX94ZxYU5UrcCEPmX9X0ncKUHfMzSL7HgiM node -e \"const { spawn } = require('child_process'); const mcp = spawn('node', ['dist/index.js'], {stdio: ['pipe', 'inherit', 'inherit']}); mcp.stdin.write(JSON.stringify({jsonrpc: '2.0', id: 1, method: 'tools/call', params: {name: 'get_database_stats', arguments: {}}}) + '\\n'); setTimeout(() => mcp.kill(), 5000);\"",
     "mcp:setup": "node .cursor-mcp-setup.js",
     "fs:start": "cd ../filesystem-mcp && npm start",
     "fs:test": "cd ../filesystem-mcp && npm test",

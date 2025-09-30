@@ -118,3 +118,9 @@ This will guide you through the Supabase setup process.
 - [Next.js + Supabase Guide](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs)
 - [Supabase Auth](https://supabase.com/docs/guides/auth)
 - [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security)
+
+
+
+
+
+

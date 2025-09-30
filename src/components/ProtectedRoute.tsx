@@ -39,3 +39,9 @@ export function ProtectedRoute({ children, redirectTo = '/auth/signin' }: Protec
   // If authenticated, render the protected content
   return <>{children}</>
 }
+
+
+
+
+
+
