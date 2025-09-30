@@ -7,6 +7,9 @@ CREATE TABLE IF NOT EXISTS public.lash_maps (
     description TEXT,
     image_url TEXT,
     video_url TEXT,
+    specifications JSONB, -- Store custom lash map configurations
+    preview_image_url TEXT, -- Realistic finished look on an eye
+    reference_map_url TEXT, -- Technical diagram for application
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 

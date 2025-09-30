@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Camera, Eye, Star, MapPin, Users } from 'lucide-react'
+import { Camera, Eye, Star, MapPin, Users, Plus } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
 
 interface LashMap {
@@ -13,6 +13,8 @@ interface LashMap {
   description: string
   image_url: string
   video_url?: string
+  preview_image_url?: string
+  reference_map_url?: string
   created_at: string
 }
 
@@ -106,36 +108,39 @@ export default function LashMapsPage() {
             Discover the perfect lash map for every client and occasion
           </p>
 
-          {/* AI Scanner Button */}
-          <Link
-            href="/dashboard/tech/lash-maps/scanner"
-            className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-          >
-            <Camera className="w-6 h-6 mr-3" />
-            AI Face Scanner - Find Perfect Maps
-          </Link>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/dashboard/tech/lash-maps/create"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+            >
+              <Plus className="w-6 h-6 mr-3" />
+              Create Custom Map
+            </Link>
+
+            <Link
+              href="/dashboard/tech/lash-maps/scanner"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+            >
+              <Camera className="w-6 h-6 mr-3" />
+              AI Face Scanner - Find Perfect Maps
+            </Link>
+          </div>
         </div>
 
         {/* Categories */}
-        <div className="space-y-16">
+        <div className="space-y-12">
           {categories.map((category) => (
-            <div key={category} className="bg-white rounded-2xl shadow-lg p-8">
-              <div className="flex items-center space-x-3 mb-8">
-                <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
-                  {category === 'Natural' && <Eye className="w-6 h-6 text-white" />}
-                  {category === 'Volume' && <Star className="w-6 h-6 text-white" />}
-                  {category === 'Mega Volume' && <Users className="w-6 h-6 text-white" />}
-                  {category === 'Special/Celebrity Styles' && <MapPin className="w-6 h-6 text-white" />}
-                </div>
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-900">{category}</h2>
-                  <p className="text-gray-600">
-                    {category === 'Natural' && 'Clean, natural enhancements'}
-                    {category === 'Volume' && 'Beautiful volume lashes'}
-                    {category === 'Mega Volume' && 'Maximum volume and drama'}
-                    {category === 'Special/Celebrity Styles' && 'Celebrity-inspired glamorous looks'}
-                  </p>
-                </div>
+            <div key={category}>
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">{category}</h2>
+                <p className="text-gray-600 mb-4">
+                  {category === 'Natural' && 'Clean, natural enhancements'}
+                  {category === 'Volume' && 'Beautiful volume lashes'}
+                  {category === 'Mega Volume' && 'Maximum volume and drama'}
+                  {category === 'Special/Celebrity Styles' && 'Celebrity-inspired glamorous looks'}
+                </p>
+                <div className="h-px bg-gradient-to-r from-purple-200 to-pink-200"></div>
               </div>
 
               {/* Difficulty Levels */}
@@ -155,21 +160,35 @@ export default function LashMapsPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {mapsForDifficulty.map((map) => (
-                          <div key={map.id} className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow duration-200">
-                            <div className="aspect-video bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg mb-4 flex items-center justify-center">
-                              <div className="text-gray-500 text-sm">Lash Map Image</div>
+                          <Link
+                            key={map.id}
+                            href={`/dashboard/tech/lash-maps/${map.id}`}
+                            className="group relative bg-white rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-200 border border-gray-100 hover:border-purple-200"
+                          >
+                            <div className="aspect-[4/3] relative">
+                              {map.preview_image_url ? (
+                                <img
+                                  src={map.preview_image_url}
+                                  alt={map.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
+                                  <Eye className="w-12 h-12 text-purple-300" />
+                                </div>
+                              )}
+
+                              {/* Overlay with map name and difficulty */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-4">
+                                <h4 className="text-lg font-bold text-white mb-2 group-hover:text-pink-200 transition-colors">
+                                  {map.name}
+                                </h4>
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium self-start ${getDifficultyColor(difficulty)}`}>
+                                  {difficulty}
+                                </span>
+                              </div>
                             </div>
-
-                            <h4 className="text-lg font-semibold text-gray-900 mb-2">{map.name}</h4>
-                            <p className="text-gray-600 text-sm mb-4">{map.description}</p>
-
-                            <Link
-                              href={`/dashboard/tech/lash-maps/${map.id}`}
-                              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-200 block text-center"
-                            >
-                              View Details
-                            </Link>
-                          </div>
+                          </Link>
                         ))}
                       </div>
                     </div>

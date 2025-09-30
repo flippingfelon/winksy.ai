@@ -368,6 +368,9 @@ export interface Database {
           description: string | null
           image_url: string | null
           video_url: string | null
+          specifications: Record<string, unknown> | null
+          preview_image_url: string | null
+          reference_map_url: string | null
           created_at: string
         }
         Insert: {
@@ -378,6 +381,9 @@ export interface Database {
           description?: string | null
           image_url?: string | null
           video_url?: string | null
+          specifications?: Record<string, unknown> | null
+          preview_image_url?: string | null
+          reference_map_url?: string | null
           created_at?: string
         }
         Update: {
@@ -388,6 +394,9 @@ export interface Database {
           description?: string | null
           image_url?: string | null
           video_url?: string | null
+          specifications?: Record<string, unknown> | null
+          preview_image_url?: string | null
+          reference_map_url?: string | null
           created_at?: string
         }
       }
