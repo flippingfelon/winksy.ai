@@ -27,13 +27,20 @@ WITH CHECK (true);
 
 -- Insert sample data
 INSERT INTO public.lash_maps (name, category, difficulty, description, image_url) VALUES
--- Natural Maps
-('Classic Natural', 'Natural', 'Beginner', 'Clean, natural look perfect for everyday wear', '/images/lash-maps/classic-natural.jpg'),
-('Wispy Natural', 'Natural', 'Beginner', 'Soft, wispy lashes that enhance your natural beauty', '/images/lash-maps/wispy-natural.jpg'),
-('Barely There', 'Natural', 'Beginner', 'Subtle enhancement that looks completely natural', '/images/lash-maps/barely-there.jpg'),
-('Everyday Glam', 'Natural', 'Intermediate', 'Natural look with a touch of glamour', '/images/lash-maps/everyday-glam.jpg'),
-('Flirty Natural', 'Natural', 'Intermediate', 'Playful yet natural enhancement', '/images/lash-maps/flirty-natural.jpg'),
-('Professional Natural', 'Natural', 'Pro', 'Perfect for corporate environments', '/images/lash-maps/professional-natural.jpg'),
+-- Natural Maps - Beginner
+('Classic Natural', 'Natural', 'Beginner', 'Simple, even length lashes that blend seamlessly with natural growth', '/images/lash-maps/classic-natural.jpg'),
+('Everyday Natural', 'Natural', 'Beginner', 'Subtle enhancement that maintains your natural lash appearance', '/images/lash-maps/everyday-natural.jpg'),
+('Natural Wispy', 'Natural', 'Beginner', 'Light, feathery look that adds definition without volume', '/images/lash-maps/natural-wispy.jpg'),
+
+-- Natural Maps - Intermediate
+('Natural Glam', 'Natural', 'Intermediate', 'Natural look with a touch of glamour for special occasions', '/images/lash-maps/natural-glam.jpg'),
+('Open Eye Natural', 'Natural', 'Intermediate', 'Eye-opening effect that enhances your natural eye shape', '/images/lash-maps/open-eye-natural.jpg'),
+('Textured Natural', 'Natural', 'Intermediate', 'Varied lengths for dimension and a textured, natural appearance', '/images/lash-maps/textured-natural.jpg'),
+
+-- Natural Maps - Pro
+('Natural Starburst', 'Natural', 'Pro', 'Complex fan placement for dramatic yet natural enhancement', '/images/lash-maps/natural-starburst.jpg'),
+('Natural Hybrid', 'Natural', 'Pro', 'Mixed classic and volume techniques for sophisticated results', '/images/lash-maps/natural-hybrid.jpg'),
+('Customized Natural', 'Natural', 'Pro', 'Tailored to face shape with personalized length and curl patterns', '/images/lash-maps/customized-natural.jpg'),
 
 -- Volume Maps
 ('Classic Volume', 'Volume', 'Beginner', 'Beautiful volume lashes for everyday wear', '/images/lash-maps/classic-volume.jpg'),

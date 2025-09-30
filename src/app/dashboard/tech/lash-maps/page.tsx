@@ -163,9 +163,12 @@ export default function LashMapsPage() {
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">{map.name}</h4>
                             <p className="text-gray-600 text-sm mb-4">{map.description}</p>
 
-                            <button className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-200">
+                            <Link
+                              href={`/dashboard/tech/lash-maps/${map.id}`}
+                              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-200 block text-center"
+                            >
                               View Details
-                            </button>
+                            </Link>
                           </div>
                         ))}
                       </div>
