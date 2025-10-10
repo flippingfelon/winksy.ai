@@ -69,7 +69,7 @@ export default function ClientsPage() {
             .order('appointment_date', { ascending: false })
             .limit(1)
 
-          const lastMap = appointments?.[0]?.lash_maps?.name || null
+          const lastMap = null // TODO: Fix lash_maps type
           return {
             ...client,
             last_map: lastMap

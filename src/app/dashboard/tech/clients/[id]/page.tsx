@@ -394,6 +394,7 @@ export default function ClientDetailPage() {
                   setAppointmentForm({
                     appointment_date: new Date().toISOString().split('T')[0],
                     lash_map_id: '',
+                    custom_lash_map_name: '',
                     curl_used: '',
                     diameter_used: '',
                     notes: '',

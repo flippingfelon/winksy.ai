@@ -116,15 +116,11 @@ export default function NewAppointmentPage() {
         booking_date: formData.booking_date,
         booking_time: formData.booking_time,
         lash_map_id: formData.lash_map_id || null,
+        service_id: formData.lash_map_id || null,
         duration_minutes: formData.duration_minutes,
         status: formData.status,
         notes: formData.notes || null,
         total_price: formData.total_price || null
-      }
-
-      // Only add service_id if we have one (to avoid empty string issues)
-      if (formData.lash_map_id) {
-        appointmentData.service_id = formData.lash_map_id
       }
 
       const { data: appointment, error: appointmentError } = await supabase

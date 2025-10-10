@@ -66,14 +66,17 @@ export async function POST(request: NextRequest) {
     console.error('Error sending SMS:', error)
     
     // Return specific error messages
-    if (error.code === 21211) {
+    const errorCode = (error as { code?: number }).code
+    const errorMessage = error instanceof Error ? error.message : 'Failed to send SMS'
+    
+    if (errorCode === 21211) {
       return NextResponse.json(
         { error: 'Invalid phone number format', configured: true },
         { status: 400 }
       )
     }
     
-    if (error.code === 21608) {
+    if (errorCode === 21608) {
       return NextResponse.json(
         { error: 'The phone number is not verified. In Twilio trial mode, you can only send to verified numbers.', configured: true },
         { status: 400 }
@@ -82,8 +85,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { 
-        error: error.message || 'Failed to send SMS',
-        code: error.code,
+        error: errorMessage,
+        code: errorCode,
         configured: true
       },
       { status: 500 }

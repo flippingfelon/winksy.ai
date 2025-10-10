@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
         events = ical.parseICS(icsText)
       } catch (fetchError: unknown) {
         console.error('Error fetching with fetch API:', fetchError)
+        const errorMsg = fetchError instanceof Error ? fetchError.message : 'Failed to fetch calendar'
         
         // Update connection with error
         await supabase
@@ -70,13 +71,13 @@ export async function POST(request: NextRequest) {
           .update({
             last_synced_at: new Date().toISOString(),
             last_sync_status: 'error',
-            last_sync_error: fetchError.message || 'Failed to fetch calendar'
+            last_sync_error: errorMsg
           })
           .eq('id', connectionId)
 
         return NextResponse.json({ 
           error: 'Failed to fetch calendar feed',
-          details: fetchError.message,
+          details: errorMsg,
           hint: 'Make sure the URL is correct and starts with https://. For Google Calendar, use the "Secret address in iCal format" from Settings.'
         }, { status: 500 })
       }

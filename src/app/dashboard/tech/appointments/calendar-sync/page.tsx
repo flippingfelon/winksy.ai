@@ -199,7 +199,7 @@ export default function CalendarSyncPage() {
   }
 
   return (
-    <ProtectedRoute allowedRoles={['tech']}>
+    <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
         {/* Header */}
         <header className="bg-white shadow-sm sticky top-0 z-50">
