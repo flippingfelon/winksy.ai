@@ -1,0 +1,29 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ec4899;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg-gradient)"/>
+  
+  <!-- Logo Circle -->
+  <circle cx="600" cy="250" r="80" fill="white" opacity="0.9"/>
+  
+  <!-- Sparkle Icon (simplified) -->
+  <path d="M600 190 L610 220 L640 230 L610 240 L600 270 L590 240 L560 230 L590 220 Z" fill="#a855f7"/>
+  <path d="M580 210 L585 225 L600 230 L585 235 L580 250 L575 235 L560 230 L575 225 Z" fill="#ec4899"/>
+  <path d="M620 210 L625 225 L640 230 L625 235 L620 250 L615 235 L600 230 L615 225 Z" fill="#ec4899"/>
+  
+  <!-- Title -->
+  <text x="600" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle">Winksy.ai</text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="450" font-family="system-ui, -apple-system, sans-serif" font-size="32" fill="white" opacity="0.9" text-anchor="middle">AI-Powered Lash Extension Revolution</text>
+  
+  <!-- Tagline -->
+  <text x="600" y="520" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="white" opacity="0.8" text-anchor="middle">Celebrity Matches • Instant Booking • Earn Rewards</text>
+</svg>
+

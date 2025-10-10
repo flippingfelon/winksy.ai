@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Winksy.ai - AI Lash Extension App",
   description: "Free AI-powered app connecting lash professionals with consumers. Get celebrity lash matches, book appointments, and earn rewards!",
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -32,7 +36,7 @@ export const metadata: Metadata = {
     siteName: "Winksy.ai",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.svg",
         width: 1200,
         height: 630
       }
@@ -44,7 +48,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Winksy.ai - AI Lash Extension App",
     description: "Free AI-powered app for lash extensions",
-    images: ["/twitter-image.png"]
+    images: ["/twitter-image.svg"]
   }
 };
 
@@ -61,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

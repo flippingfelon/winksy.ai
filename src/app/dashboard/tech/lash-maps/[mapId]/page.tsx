@@ -14,7 +14,12 @@ interface LashMap {
   description: string
   image_url: string
   video_url?: string
-  specifications?: string
+  specifications?: {
+    lengths?: { [key: string]: number }
+    curl_options?: string
+    diameter?: string
+    recommended_products?: string[]
+  } | string // Support both old string format and new object format
   preview_image_url?: string
   reference_map_url?: string
   created_at: string
@@ -31,15 +36,20 @@ interface LashZone {
 }
 
 interface LashMapSpecs {
-  zones: LashZone[]
-  curl_options: string[]
-  curl_explanation: string
-  diameter: string
-  technique: string
-  application_time: string
-  maintenance: string
-  notes: string[]
-  created_at: string
+  // Old format properties
+  zones?: LashZone[]
+  curl_options?: string[]
+  curl_explanation?: string
+  diameter?: string
+  technique?: string
+  application_time?: string
+  maintenance?: string
+  notes?: string[]
+  created_at?: string
+
+  // New format properties
+  lengths?: { [key: string]: number }
+  recommended_products?: string[]
 }
 
 interface RecommendedProduct {
@@ -48,72 +58,221 @@ interface RecommendedProduct {
   why_needed: string
 }
 
-function EyeDiagram() {
-  // Classic Natural specific zones: Inner, Inner-Center, Center, Outer-Center, Outer
-  const classicNaturalLengths = [9, 10, 11, 12, 11]
-  const maxLength = Math.max(...classicNaturalLengths)
-  const minLength = Math.min(...classicNaturalLengths)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function EyeDiagram({ mapSpecifications, mapName }: { mapSpecifications?: any, mapName?: string }) {
+  // Get the actual lengths from specifications or use defaults
+  const lengths = mapSpecifications?.lengths ?
+    Object.values(mapSpecifications.lengths) :
+    [9, 10, 11, 12, 11] // fallback
 
-  // Scale factors for visualization
-  const eyeWidth = 340
-  const eyeHeight = 180
+  const maxLength = Math.max(...(lengths as number[]))
+  const minLength = Math.min(...(lengths as number[]))
+
+  // Special handling for Natural Wispy - create spiky pattern
+  const isNaturalWispy = mapName === 'Natural Wispy'
+
+  // Dynamic sizing based on number of zones
+  const numZones = lengths.length
+  
+  // Fixed canvas size for consistency - zones will adjust within this space
+  const eyeWidth = 700 // Fixed width for all maps
+  const eyeHeight = 200 // Fixed height
   const baseLashHeight = 15 // Minimum lash height
-  const maxLashHeight = 75 // Maximum lash height
+  const maxLashHeight = isNaturalWispy ? 120 : 80
+
+  // Smart zone labels based on number of zones
+  const getZoneLabels = (count: number) => {
+    if (count === 5) return ['Inner', 'Inner-Mid', 'Center', 'Outer-Mid', 'Outer']
+    if (count === 7) return ['Inner', 'Inner-Mid', 'Center-Inner', 'Center', 'Center-Outer', 'Outer-Mid', 'Outer']
+    if (count === 10) return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    return Array.from({length: count}, (_, i) => `${i + 1}`)
+  }
+  
+  const zoneLabels = getZoneLabels(numZones)
+
+  // Calculate viewBox dimensions
+  const viewBoxWidth = eyeWidth
+  const viewBoxHeight = eyeHeight + 100
+  const viewBoxValue = `0 0 ${viewBoxWidth} ${viewBoxHeight}`
+  
+  // Calculate zone spacing - more zones = lines closer together
+  const paddingX = 100 // Padding on each side
+  const usableWidth = eyeWidth - (paddingX * 2)
+  const zoneSpacing = usableWidth / (numZones - 1)
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-8">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Lash Map Diagram</h2>
-        <p className="text-gray-600">Classic Natural lash placement pattern</p>
+        <p className="text-gray-600 flex items-center justify-center gap-2">
+          {isNaturalWispy ? 'Natural Wispy - Clean 7-zone pattern' :
+           numZones === 7 ? '7-Zone Symmetrical Doll Eye Pattern' :
+           numZones === 5 ? '5-Zone Classic Pattern' :
+           numZones === 10 ? '10-Zone Precision Pattern' :
+           numZones + '-Zone Custom Pattern'}
+          <span className="text-purple-600 font-semibold">• {numZones} Zones</span>
+        </p>
       </div>
 
       <div className="flex justify-center">
-        <svg width={eyeWidth} height={eyeHeight + 60} viewBox={`0 0 ${eyeWidth} ${eyeHeight + 60}`} className="border border-gray-200 rounded-lg bg-gradient-to-b from-blue-50 to-white">
-          {/* Eye outline */}
-          <ellipse
-            cx={eyeWidth / 2}
-            cy={eyeHeight / 2 + 15}
-            rx={eyeWidth / 2 - 35}
-            ry={eyeHeight / 2 - 35}
-            fill="none"
-            stroke="#d1d5db"
-            strokeWidth="2"
-            strokeDasharray="5,5"
-          />
-
-          {/* Lash lines */}
-          {classicNaturalLengths.map((length, index) => {
-            const scaledHeight = ((length - minLength) / (maxLength - minLength)) * (maxLashHeight - baseLashHeight) + baseLashHeight
-            const x = 45 + (index * (eyeWidth - 90) / (classicNaturalLengths.length - 1)) // Evenly space across eye
-
-            return (
-              <g key={`lash-${index}`}>
-                {/* Lash line */}
-                <line
-                  x1={x}
-                  y1={eyeHeight / 2 + 15}
-                  x2={x}
-                  y2={eyeHeight / 2 + 15 - scaledHeight}
-                  stroke="#8b5cf6"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  filter="drop-shadow(0 2px 4px rgba(139, 92, 246, 0.3))"
-                />
-
-                {/* Length label below lash */}
-                <text
-                  x={x}
-                  y={eyeHeight / 2 + 35}
-                  textAnchor="middle"
-                  className="text-sm font-bold fill-purple-700"
+        <svg
+          width="100%"
+          height={eyeHeight + 100}
+          viewBox={viewBoxValue}
+          className="border border-gray-200 rounded-lg bg-gradient-to-b from-blue-50 to-white max-w-4xl"
+          style={{ maxHeight: '400px' }}
                 >
-                  {length}mm
-                </text>
-              </g>
-            )
+                  {/* Eye outline - positioned below lash lines */}
+                  <ellipse
+                    cx={eyeWidth / 2}
+                    cy={eyeHeight / 2 + 120}
+                    rx={eyeWidth / 2 - 80}
+                    ry={60}
+                    fill="none"
+                    stroke="#374151"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                  />
+
+          {/* Lash lines with dynamic spacing based on number of zones */}
+          {lengths.map((length, index) => {
+            // Calculate X position - evenly distribute zones across usable width
+            const zoneStartX = paddingX + (index * zoneSpacing)
+            
+            // Adjust visual elements based on zone count
+            const strokeWidth = numZones > 8 ? 2.5 : numZones > 5 ? 3 : 4
+            // Increased by 40% total: 14px → 17px → 20px, 16px → 19px → 23px
+            const labelSize = numZones > 8 ? 'text-[20px]' : 'text-[23px]'
+            // Increased by 40% total: 16px → 19px → 23px, 18px → 22px → 26px
+            const lengthSize = numZones > 8 ? 'text-[23px]' : 'text-[26px]'
+
+            if (isNaturalWispy) {
+              // Clean single line per zone for Natural Wispy
+              const currentLength = length as number
+              const scaledHeight = ((currentLength - minLength) / (maxLength - minLength)) * (maxLashHeight - baseLashHeight) + baseLashHeight
+
+              return (
+                <g key={`zone-${index}`}>
+                  {/* Zone divider line (subtle) */}
+                  {index > 0 && (
+                    <line
+                      x1={zoneStartX - zoneSpacing / 2}
+                      y1={eyeHeight / 2 - 20}
+                      x2={zoneStartX - zoneSpacing / 2}
+                      y2={eyeHeight / 2 + 30}
+                      stroke="#e5e7eb"
+                      strokeWidth="1"
+                      strokeDasharray="3,3"
+                      opacity="0.4"
+                    />
+                  )}
+                  
+                  {/* Single clean lash line per zone */}
+                  <line
+                    x1={zoneStartX}
+                    y1={eyeHeight / 2 + 15}
+                    x2={zoneStartX}
+                    y2={eyeHeight / 2 + 15 - scaledHeight}
+                    stroke="#7c3aed"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    filter="drop-shadow(0 2px 4px rgba(139, 92, 246, 0.3))"
+                  />
+
+                  {/* Length value at top (no "mm") - moved 30% higher */}
+                  <text
+                    x={zoneStartX}
+                    y={eyeHeight / 2 + 15 - scaledHeight - 39}
+                    textAnchor="middle"
+                    className={`${lengthSize} font-bold fill-purple-700`}
+                  >
+                    {currentLength}
+                  </text>
+
+                  {/* Zone label below length value - moved 30% higher */}
+                  <text
+                    x={zoneStartX}
+                    y={eyeHeight / 2 + 15 - scaledHeight - 19}
+                    textAnchor="middle"
+                    className={`${labelSize} font-semibold fill-gray-700`}
+                  >
+                    {zoneLabels[index] || ''}
+                  </text>
+                  
+                  {/* Zone marker dot at base */}
+                  <circle
+                    cx={zoneStartX}
+                    cy={eyeHeight / 2 + 15}
+                    r={numZones > 8 ? 2 : 3}
+                    fill="#8b5cf6"
+                  />
+                </g>
+              )
+            } else {
+              // Regular single lash per zone for other maps
+              const currentLength = length as number
+              const scaledHeight = ((currentLength - minLength) / (maxLength - minLength)) * (maxLashHeight - baseLashHeight) + baseLashHeight
+
+              return (
+                <g key={`lash-${index}`}>
+                  {/* Zone divider line (subtle) */}
+                  {index > 0 && (
+                    <line
+                      x1={zoneStartX - zoneSpacing / 2}
+                      y1={eyeHeight / 2 - 20}
+                      x2={zoneStartX - zoneSpacing / 2}
+                      y2={eyeHeight / 2 + 30}
+                      stroke="#e5e7eb"
+                      strokeWidth="1"
+                      strokeDasharray="3,3"
+                      opacity="0.4"
+                    />
+                  )}
+                  
+                  {/* Lash line */}
+                  <line
+                    x1={zoneStartX}
+                    y1={eyeHeight / 2 + 15}
+                    x2={zoneStartX}
+                    y2={eyeHeight / 2 + 15 - scaledHeight}
+                    stroke="#8b5cf6"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    filter="drop-shadow(0 2px 4px rgba(139, 92, 246, 0.3))"
+                  />
+
+                  {/* Length value at top (no "mm") - moved 30% higher */}
+                  <text
+                    x={zoneStartX}
+                    y={eyeHeight / 2 + 15 - scaledHeight - 39}
+                    textAnchor="middle"
+                    className={`${lengthSize} font-bold fill-purple-700`}
+                  >
+                    {currentLength}
+                  </text>
+
+                  {/* Zone label below length value - moved 30% higher */}
+                  <text
+                    x={zoneStartX}
+                    y={eyeHeight / 2 + 15 - scaledHeight - 19}
+                    textAnchor="middle"
+                    className={`${labelSize} font-semibold fill-gray-700`}
+                  >
+                    {zoneLabels[index]}
+                  </text>
+                  
+                  {/* Zone marker dot at base */}
+                  <circle
+                    cx={zoneStartX}
+                    cy={eyeHeight / 2 + 15}
+                    r={numZones > 8 ? 2 : 3}
+                    fill="#8b5cf6"
+                  />
+                </g>
+              )
+            }
           })}
 
-          {/* Eyelid crease hint */}
           <path
             d={`M ${eyeWidth / 2 - 60} ${eyeHeight / 2} Q ${eyeWidth / 2} ${eyeHeight / 2 - 15} ${eyeWidth / 2 + 60} ${eyeHeight / 2}`}
             fill="none"
@@ -124,28 +283,10 @@ function EyeDiagram() {
         </svg>
       </div>
 
-      {/* Zone explanation - simplified */}
-      <div className="mt-4 flex justify-center">
-        <div className="text-center">
-          <div className="text-sm text-gray-600 mb-2">Zone Measurements (mm)</div>
-          <div className="flex items-center justify-center space-x-6 text-lg font-bold text-purple-700">
-            <span>9</span>
-            <span className="text-gray-400">|</span>
-            <span>10</span>
-            <span className="text-gray-400">|</span>
-            <span>11</span>
-            <span className="text-gray-400">|</span>
-            <span>12</span>
-            <span className="text-gray-400">|</span>
-            <span>11</span>
-          </div>
-          <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 mt-1">
-            <span>Inner</span>
-            <span>Inner-Center</span>
-            <span>Center</span>
-            <span>Outer-Center</span>
-            <span>Outer</span>
-          </div>
+      {/* Clean minimal specifications */}
+      <div className="mt-6 text-center">
+        <div className="text-sm text-gray-600">
+          {isNaturalWispy ? 'Alternate C curl (tall) and CC curl (short) for texture' : 'Standard lash map pattern'}
         </div>
       </div>
     </div>
@@ -178,11 +319,17 @@ export default function LashMapDetailPage() {
       // Parse specifications if available
       if (data.specifications) {
         try {
-          const specs = JSON.parse(data.specifications)
-          setSpecifications(specs)
+          // Handle both new object format and old string format
+          let specs;
+          if (typeof data.specifications === 'string') {
+            specs = JSON.parse(data.specifications);
+          } else {
+            specs = data.specifications;
+          }
+          setSpecifications(specs);
         } catch (parseError) {
-          console.warn('Failed to parse specifications:', parseError)
-          setSpecifications(null)
+          console.warn('Failed to parse specifications:', parseError);
+          setSpecifications(null);
         }
       }
 
@@ -328,60 +475,78 @@ export default function LashMapDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Visual Eye Diagram - 40% of space */}
           <div className="lg:col-span-5">
-            <EyeDiagram />
+            <EyeDiagram mapSpecifications={specifications || undefined} mapName={lashMap.name} />
           </div>
 
           {/* Right Column - Specifications and Tutorial */}
           <div className="lg:col-span-7 space-y-6">
-            {/* Specifications - 30% of space */}
-            {specifications && (
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Settings className="w-5 h-5 text-purple-600" />
-                  <h3 className="text-xl font-bold text-gray-900">Specifications</h3>
+            {/* Specifications - ALWAYS SHOW FOR ALL MAPS */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <Settings className="w-5 h-5 text-purple-600" />
+                <h3 className="text-xl font-bold text-gray-900">Specifications</h3>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Length Zones - Uniform Template */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4">
+                  <h4 className="text-base font-semibold text-gray-900 mb-3">Length Zones</h4>
+                  <div className="space-y-1">
+                    {specifications?.lengths && Object.keys(specifications.lengths).length > 0 ? (
+                      Object.entries(specifications.lengths).map(([zone, length]) => (
+                        <div key={zone} className="flex justify-between items-center">
+                          <span className="text-xs text-gray-600">Zone {zone}:</span>
+                          <span className="font-medium text-gray-900 text-xs">{length}mm</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-xs text-gray-600">No zones specified</span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  {/* Curl Options */}
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4">
-                    <h4 className="text-base font-semibold text-gray-900 mb-2">Curl Options</h4>
-                    <div className="space-y-1 mb-2">
-                      {specifications.curl_options.map((curl) => (
-                        <span key={curl} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 mr-1 mb-1">
-                          {curl}
-                        </span>
-                      ))}
+                {/* Application Details - Uniform Template */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4">
+                  <h4 className="text-base font-semibold text-gray-900 mb-3">Application Details</h4>
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Curl:</span>
+                      <span className="font-medium text-gray-900 text-xs">{specifications?.curl_options || 'N/A'}</span>
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      {specifications.curl_explanation}
-                    </p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Diameter:</span>
+                      <span className="font-medium text-gray-900 text-xs">{specifications?.diameter || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Difficulty:</span>
+                      <span className="font-medium text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800">
+                        {lashMap.difficulty}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Category:</span>
+                      <span className="font-medium text-gray-900 text-xs">{lashMap.category}</span>
+                    </div>
                   </div>
+                </div>
 
-                  {/* Application Details */}
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4">
-                    <h4 className="text-base font-semibold text-gray-900 mb-2">Application Details</h4>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Technique:</span>
-                        <span className="font-medium text-gray-900 text-xs">{specifications.technique}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Diameter:</span>
-                        <span className="font-medium text-gray-900 text-xs">{specifications.diameter}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Application Time:</span>
-                        <span className="font-medium text-gray-900 text-xs">{specifications.application_time}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs text-gray-600">Maintenance:</span>
-                        <span className="font-medium text-gray-900 text-xs">{specifications.maintenance}</span>
-                      </div>
-                    </div>
+                {/* Recommended Products - Uniform Template */}
+                <div className="md:col-span-2 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4">
+                  <h4 className="text-base font-semibold text-gray-900 mb-3">Recommended Products</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {specifications?.recommended_products && specifications.recommended_products.length > 0 ? (
+                      specifications.recommended_products.map((product, index) => (
+                        <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {product}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-gray-600">No products specified</span>
+                    )}
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Tutorial/Training Buttons - 20% of space, Prominent CTA */}
             <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl p-6 text-white">
@@ -431,3 +596,4 @@ export default function LashMapDetailPage() {
     </div>
   )
 }
+

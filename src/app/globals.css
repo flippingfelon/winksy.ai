@@ -42,7 +42,7 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: var(--font-sans);
+    font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -138,6 +138,12 @@
 
 /* Utility Classes */
 @layer utilities {
+  /* Ensure SVG icons render properly */
+  svg {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  
   /* Text Gradient */
   .text-gradient {
     @apply bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent;

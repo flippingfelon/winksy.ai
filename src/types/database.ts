@@ -218,13 +218,23 @@ export interface Database {
           id: string
           user_id: string
           tech_id: string
-          service_id: string
+          service_id: string | null
           booking_date: string
           booking_time: string
           status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
           notes: string | null
           total_price: number | null
           tenant_id: string | null
+          duration_minutes: number
+          reminder_sent: boolean
+          completed_at: string | null
+          cancelled_at: string | null
+          cancellation_reason: string | null
+          client_id: string | null
+          lash_map_id: string | null
+          import_source: string | null
+          external_event_id: string | null
+          calendar_connection_id: string | null
           created_at: string
           updated_at: string
         }
@@ -232,13 +242,23 @@ export interface Database {
           id?: string
           user_id: string
           tech_id: string
-          service_id: string
+          service_id?: string | null
           booking_date: string
           booking_time: string
           status?: 'pending' | 'confirmed' | 'completed' | 'cancelled'
           notes?: string | null
           total_price?: number | null
           tenant_id?: string | null
+          duration_minutes?: number
+          reminder_sent?: boolean
+          completed_at?: string | null
+          cancelled_at?: string | null
+          cancellation_reason?: string | null
+          client_id?: string | null
+          lash_map_id?: string | null
+          import_source?: string | null
+          external_event_id?: string | null
+          calendar_connection_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -246,13 +266,23 @@ export interface Database {
           id?: string
           user_id?: string
           tech_id?: string
-          service_id?: string
+          service_id?: string | null
           booking_date?: string
           booking_time?: string
           status?: 'pending' | 'confirmed' | 'completed' | 'cancelled'
           notes?: string | null
           total_price?: number | null
           tenant_id?: string | null
+          duration_minutes?: number
+          reminder_sent?: boolean
+          completed_at?: string | null
+          cancelled_at?: string | null
+          cancellation_reason?: string | null
+          client_id?: string | null
+          lash_map_id?: string | null
+          import_source?: string | null
+          external_event_id?: string | null
+          calendar_connection_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -368,7 +398,12 @@ export interface Database {
           description: string | null
           image_url: string | null
           video_url: string | null
-          specifications: Record<string, unknown> | null
+          specifications: {
+            lengths?: { [key: string]: number }
+            curl_options?: string
+            diameter?: string
+            recommended_products?: string[]
+          } | null
           preview_image_url: string | null
           reference_map_url: string | null
           created_at: string
@@ -381,7 +416,12 @@ export interface Database {
           description?: string | null
           image_url?: string | null
           video_url?: string | null
-          specifications?: Record<string, unknown> | null
+          specifications?: {
+            lengths?: { [key: string]: number }
+            curl_options?: string
+            diameter?: string
+            recommended_products?: string[]
+          } | null
           preview_image_url?: string | null
           reference_map_url?: string | null
           created_at?: string
@@ -394,7 +434,12 @@ export interface Database {
           description?: string | null
           image_url?: string | null
           video_url?: string | null
-          specifications?: Record<string, unknown> | null
+          specifications?: {
+            lengths?: { [key: string]: number }
+            curl_options?: string
+            diameter?: string
+            recommended_products?: string[]
+          } | null
           preview_image_url?: string | null
           reference_map_url?: string | null
           created_at?: string
@@ -426,6 +471,286 @@ export interface Database {
           created_at?: string
         }
       }
+      clients: {
+        Row: {
+          id: string
+          tech_id: string
+          client_name: string
+          phone: string | null
+          email: string | null
+          last_appointment_date: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tech_id: string
+          client_name: string
+          phone?: string | null
+          email?: string | null
+          last_appointment_date?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tech_id?: string
+          client_name?: string
+          phone?: string | null
+          email?: string | null
+          last_appointment_date?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      client_appointments: {
+        Row: {
+          id: string
+          client_id: string
+          lash_map_id: string | null
+          custom_lash_map_id: string | null
+          appointment_date: string
+          curl_used: string | null
+          diameter_used: string | null
+          notes: string | null
+          photo_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          lash_map_id?: string | null
+          custom_lash_map_id?: string | null
+          appointment_date: string
+          curl_used?: string | null
+          diameter_used?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          client_id?: string
+          lash_map_id?: string | null
+          custom_lash_map_id?: string | null
+          appointment_date?: string
+          curl_used?: string | null
+          diameter_used?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      custom_lash_maps: {
+        Row: {
+          id: string
+          tech_id: string
+          name: string
+          lengths: { [key: string]: number }
+          curl_used: string | null
+          diameter_used: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tech_id: string
+          name: string
+          lengths: { [key: string]: number }
+          curl_used?: string | null
+          diameter_used?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tech_id?: string
+          name?: string
+          lengths?: { [key: string]: number }
+          curl_used?: string | null
+          diameter_used?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      posts: {
+        Row: {
+          id: string
+          user_id: string
+          image_url: string
+          caption: string | null
+          post_type: 'look' | 'tutorial' | 'tip' | 'before-after'
+          lash_map_id: string | null
+          likes_count: number
+          comments_count: number
+          is_tech_only: boolean
+          tenant_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          image_url: string
+          caption?: string | null
+          post_type: 'look' | 'tutorial' | 'tip' | 'before-after'
+          lash_map_id?: string | null
+          likes_count?: number
+          comments_count?: number
+          is_tech_only?: boolean
+          tenant_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          image_url?: string
+          caption?: string | null
+          post_type?: 'look' | 'tutorial' | 'tip' | 'before-after'
+          lash_map_id?: string | null
+          likes_count?: number
+          comments_count?: number
+          is_tech_only?: boolean
+          tenant_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      post_likes: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          created_at?: string
+        }
+      }
+      post_comments: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          comment_text: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          comment_text: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          comment_text?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      user_follows: {
+        Row: {
+          id: string
+          follower_id: string
+          following_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          follower_id: string
+          following_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          follower_id?: string
+          following_id?: string
+          created_at?: string
+        }
+      }
+      calendar_connections: {
+        Row: {
+          id: string
+          tech_id: string
+          platform: 'google' | 'ical' | 'square' | 'booksy' | 'glossgenius' | 'other'
+          connection_name: string | null
+          connection_url: string | null
+          access_token: string | null
+          refresh_token: string | null
+          calendar_id: string | null
+          sync_direction: 'import_only' | 'two_way'
+          is_active: boolean
+          last_synced_at: string | null
+          sync_frequency_minutes: number
+          last_sync_status: string | null
+          last_sync_error: string | null
+          appointments_imported: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tech_id: string
+          platform: 'google' | 'ical' | 'square' | 'booksy' | 'glossgenius' | 'other'
+          connection_name?: string | null
+          connection_url?: string | null
+          access_token?: string | null
+          refresh_token?: string | null
+          calendar_id?: string | null
+          sync_direction?: 'import_only' | 'two_way'
+          is_active?: boolean
+          last_synced_at?: string | null
+          sync_frequency_minutes?: number
+          last_sync_status?: string | null
+          last_sync_error?: string | null
+          appointments_imported?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tech_id?: string
+          platform?: 'google' | 'ical' | 'square' | 'booksy' | 'glossgenius' | 'other'
+          connection_name?: string | null
+          connection_url?: string | null
+          access_token?: string | null
+          refresh_token?: string | null
+          calendar_id?: string | null
+          sync_direction?: 'import_only' | 'two_way'
+          is_active?: boolean
+          last_synced_at?: string | null
+          sync_frequency_minutes?: number
+          last_sync_status?: string | null
+          last_sync_error?: string | null
+          appointments_imported?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -454,6 +779,14 @@ export type Point = Tables<'points'>
 export type UserLevel = Tables<'user_levels'>
 export type Review = Tables<'reviews'>
 export type TenantAdmin = Tables<'tenant_admins'>
+export type Client = Tables<'clients'>
+export type ClientAppointment = Tables<'client_appointments'>
+export type CustomLashMap = Tables<'custom_lash_maps'>
+export type Post = Tables<'posts'>
+export type PostLike = Tables<'post_likes'>
+export type PostComment = Tables<'post_comments'>
+export type UserFollow = Tables<'user_follows'>
+export type CalendarConnection = Tables<'calendar_connections'>
 
 // Insert types
 export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
@@ -466,6 +799,14 @@ export type PointInsert = Database['public']['Tables']['points']['Insert']
 export type UserLevelInsert = Database['public']['Tables']['user_levels']['Insert']
 export type ReviewInsert = Database['public']['Tables']['reviews']['Insert']
 export type TenantAdminInsert = Database['public']['Tables']['tenant_admins']['Insert']
+export type ClientInsert = Database['public']['Tables']['clients']['Insert']
+export type ClientAppointmentInsert = Database['public']['Tables']['client_appointments']['Insert']
+export type CustomLashMapInsert = Database['public']['Tables']['custom_lash_maps']['Insert']
+export type PostInsert = Database['public']['Tables']['posts']['Insert']
+export type PostLikeInsert = Database['public']['Tables']['post_likes']['Insert']
+export type PostCommentInsert = Database['public']['Tables']['post_comments']['Insert']
+export type UserFollowInsert = Database['public']['Tables']['user_follows']['Insert']
+export type CalendarConnectionInsert = Database['public']['Tables']['calendar_connections']['Insert']
 
 // Update types
 export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
@@ -478,3 +819,11 @@ export type PointUpdate = Database['public']['Tables']['points']['Update']
 export type UserLevelUpdate = Database['public']['Tables']['user_levels']['Update']
 export type ReviewUpdate = Database['public']['Tables']['reviews']['Update']
 export type TenantAdminUpdate = Database['public']['Tables']['tenant_admins']['Update']
+export type ClientUpdate = Database['public']['Tables']['clients']['Update']
+export type ClientAppointmentUpdate = Database['public']['Tables']['client_appointments']['Update']
+export type CustomLashMapUpdate = Database['public']['Tables']['custom_lash_maps']['Update']
+export type PostUpdate = Database['public']['Tables']['posts']['Update']
+export type PostLikeUpdate = Database['public']['Tables']['post_likes']['Update']
+export type PostCommentUpdate = Database['public']['Tables']['post_comments']['Update']
+export type UserFollowUpdate = Database['public']['Tables']['user_follows']['Update']
+export type CalendarConnectionUpdate = Database['public']['Tables']['calendar_connections']['Update']

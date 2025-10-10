@@ -21,7 +21,8 @@ import {
   LogOut,
   User,
   Settings,
-  Bell
+  Bell,
+  Camera
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -155,6 +156,12 @@ export default function Dashboard() {
             
               <div className="flex items-center space-x-4">
                 {profile && <RoleSwitcher profile={profile} />}
+                <Link href="/feed" className="p-2 text-gray-600 hover:text-gray-900 transition-colors relative group">
+                  <Camera className="w-5 h-5" />
+                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    Lash Feed
+                  </span>
+                </Link>
                 <button className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
                   <Bell className="w-5 h-5" />
                 </button>

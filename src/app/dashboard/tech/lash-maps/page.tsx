@@ -27,16 +27,27 @@ interface GroupedMaps {
 export default function LashMapsPage() {
   const [groupedMaps, setGroupedMaps] = useState<GroupedMaps>({})
   const [loading, setLoading] = useState(true)
+
   const supabase = createClient()
 
   const fetchLashMaps = useCallback(async () => {
     try {
+      console.log('Starting to fetch lash maps...')
+      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Not set')
+
       const { data, error } = await supabase
         .from('lash_maps')
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      console.log('Supabase response received:', { hasData: !!data, hasError: !!error })
+
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+
+      console.log('Processing data:', data?.length, 'maps')
 
       // Group maps by category and difficulty
       const grouped: GroupedMaps = {}
@@ -51,15 +62,19 @@ export default function LashMapsPage() {
         grouped[map.category][map.difficulty].push(map)
       })
 
+      console.log('Grouped data:', grouped)
       setGroupedMaps(grouped)
     } catch (error) {
       console.error('Error fetching lash maps:', error)
+      // For now, set loading to false even on error so we can see the page
+      setTimeout(() => setLoading(false), 2000)
     } finally {
       setLoading(false)
     }
   }, [supabase])
 
   useEffect(() => {
+    console.log('Component mounted, fetching lash maps...')
     fetchLashMaps()
   }, [fetchLashMaps])
 
@@ -110,6 +125,14 @@ export default function LashMapsPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/dashboard/tech/lash-maps/admin"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+            >
+              <Plus className="w-6 h-6 mr-3" />
+              Add New Map (Admin)
+            </Link>
+
             <Link
               href="/dashboard/tech/lash-maps/create"
               className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
@@ -167,10 +190,9 @@ export default function LashMapsPage() {
                           >
                             <div className="aspect-[4/3] relative">
                               {map.preview_image_url ? (
-                                <img
-                                  src={map.preview_image_url}
-                                  alt={map.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                <div
+                                  className="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-300"
+                                  style={{ backgroundImage: `url(${map.preview_image_url})` }}
                                 />
                               ) : (
                                 <div className="w-full h-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
