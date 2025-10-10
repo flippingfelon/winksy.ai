@@ -177,9 +177,9 @@ export default function LashMapsAdminPage() {
       fetchLashMaps()
       setShowForm(false)
       setEditingMap(null)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving lash map:', error)
-      const errorMessage = error?.message || error?.toString() || 'Unknown error'
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       alert(`Error saving lash map: ${errorMessage}`)
     } finally {
       setUploading(false)

@@ -109,7 +109,7 @@ export default function NewAppointmentPage() {
       }
 
       // Create appointment
-      const appointmentData: any = {
+      const appointmentData = {
         tech_id: user?.id || '',
         user_id: user?.id || '', // For now, same as tech_id
         client_id: clientId,

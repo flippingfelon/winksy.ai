@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       configured: true
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error sending SMS:', error)
     
     // Return specific error messages

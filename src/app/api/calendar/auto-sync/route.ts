@@ -50,13 +50,14 @@ export async function GET(request: NextRequest) {
         })
 
         console.log(`Synced calendar ${connection.connection_name}: ${data.imported_count || 0} appointments`)
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`Error syncing calendar ${connection.id}:`, error)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         results.push({
           connectionId: connection.id,
           connectionName: connection.connection_name,
           status: 'failed',
-          error: error.message
+          error: errorMessage
         })
       }
     }
@@ -69,10 +70,11 @@ export async function GET(request: NextRequest) {
       results
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in auto-sync:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to auto-sync calendars'
     return NextResponse.json(
-      { error: error.message || 'Failed to auto-sync calendars' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

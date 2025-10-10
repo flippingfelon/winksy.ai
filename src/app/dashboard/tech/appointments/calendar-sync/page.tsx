@@ -320,7 +320,7 @@ export default function CalendarSyncPage() {
                   </label>
                   <select
                     value={formData.platform}
-                    onChange={(e) => setFormData({ ...formData, platform: e.target.value as any })}
+                    onChange={(e) => setFormData({ ...formData, platform: e.target.value as 'google' | 'ical' | 'square' | 'booksy' | 'glossgenius' | 'other' })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
                     <option value="ical">iCal / Webcal Feed</option>

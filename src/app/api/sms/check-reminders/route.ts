@@ -111,13 +111,14 @@ export async function GET(request: NextRequest) {
         })
 
         console.log(`Reminder sent for appointment ${appointment.id}`)
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`Error sending reminder for appointment ${appointment.id}:`, error)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         results.push({
           appointmentId: appointment.id,
           phone: appointment.client?.phone,
           status: 'failed',
-          error: error.message
+          error: errorMessage
         })
       }
     }
@@ -131,10 +132,11 @@ export async function GET(request: NextRequest) {
       configured: true
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in check-reminders:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to check reminders'
     return NextResponse.json(
-      { error: error.message || 'Failed to check reminders' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

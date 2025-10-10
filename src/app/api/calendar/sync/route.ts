@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     try {
       // Try with node-ical first
       events = await ical.async.fromURL(calendarUrl)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching iCal with node-ical, trying fetch:', error)
       
       // Fallback: Try with fetch API (works better for some Google Calendar URLs)
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         
         // Parse the ICS text
         events = ical.parseICS(icsText)
-      } catch (fetchError: any) {
+      } catch (fetchError: unknown) {
         console.error('Error fetching with fetch API:', fetchError)
         
         // Update connection with error
@@ -182,9 +182,10 @@ export async function POST(request: NextRequest) {
             imported++
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error processing event:', error)
-        errors.push(`Error processing event: ${error.message}`)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        errors.push(`Error processing event: ${errorMessage}`)
       }
     }
 
@@ -207,10 +208,11 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in calendar sync:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to sync calendar'
     return NextResponse.json(
-      { error: error.message || 'Failed to sync calendar' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

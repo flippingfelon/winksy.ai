@@ -1,0 +1,14 @@
+*.js
+!src/**/*.js
+!src/**/*.jsx
+!src/**/*.ts
+!src/**/*.tsx
+mcp-server/
+node_modules/
+.next/
+out/
+build/
+dist/
+*.config.js
+*.config.mjs
+
