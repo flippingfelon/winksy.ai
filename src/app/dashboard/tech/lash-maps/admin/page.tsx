@@ -312,13 +312,22 @@ export default function LashMapsAdminPage() {
                 <Eye className="w-4 h-4 mr-2" />
                 View Library
               </Link>
-              <button
-                onClick={handleNewMap}
-                className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Map
-              </button>
+              <div className="flex gap-3">
+                <Link
+                  href="/dashboard/tech/lash-maps/import"
+                  className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:shadow-lg transition-all"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import Maps
+                </Link>
+                <button
+                  onClick={handleNewMap}
+                  className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Map
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -1,0 +1,317 @@
+[
+    {
+      "name": "Classic Cat Eye",
+      "category": "Classic",
+      "difficulty": "Beginner",
+      "description": "Features lashes that gradually increase in length from the inner corner to the outer, giving a lifted, elongated eye shape. Ideal for clients wanting a subtle yet sultry look, especially flattering for round eyes.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Inner-Mid", "length": "9mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Center", "length": "10mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Outer-Mid", "length": "11mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Outer", "length": "12mm", "curl": "C", "diameter": "0.15mm"}
+      ],
+      "products": [
+        "0.15mm Classic Lashes - C Curl",
+        "Lengths: 8mm, 9mm, 10mm, 11mm, 12mm",
+        "Adhesive suitable for classic applications",
+        "Tweezers, Eyelash pads"
+      ],
+      "application_notes": "Maintain a smooth graduation of length from inner to outer for a seamless lift.[web:9][web:14]"
+    },
+    {
+      "name": "Doll Eye",
+      "category": "Volume",
+      "difficulty": "Intermediate",
+      "description": "Creates a wide, round-eyed effect by placing the longest lashes in the center of the eye and tapering towards the corners. Great for clients with almond, hooded, or downturned eyes seeking an open, awake look.",
+      "zones": [
+        {"zone": "Inner", "length": "9mm", "curl": "CC", "diameter": "0.07mm"},
+        {"zone": "Inner-Mid", "length": "11mm", "curl": "CC", "diameter": "0.07mm"},
+        {"zone": "Center", "length": "13mm", "curl": "D", "diameter": "0.07mm"},
+        {"zone": "Outer-Mid", "length": "11mm", "curl": "CC", "diameter": "0.07mm"},
+        {"zone": "Outer", "length": "9mm", "curl": "CC", "diameter": "0.07mm"}
+      ],
+      "products": [
+        "0.07mm Volume Lashes - CC, D Curl",
+        "Lengths: 9mm, 11mm, 13mm",
+        "Volume adhesive",
+        "Volume tweezers"
+      ],
+      "application_notes": "Avoid strong outer corner length; keep ends short for a rounded effect.[web:9][web:2][web:5]"
+    },
+    {
+      "name": "Classic Natural/Kitten Eye",
+      "category": "Classic",
+      "difficulty": "Beginner",
+      "description": "Mimics the natural lash growth pattern for a soft, barely-enhanced look. Suits all eye shapes, particularly clients seeking a natural finish or first-time extension wearers.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "J", "diameter": "0.12mm"},
+        {"zone": "Inner-Mid", "length": "9mm", "curl": "J", "diameter": "0.12mm"},
+        {"zone": "Center", "length": "10mm", "curl": "B", "diameter": "0.12mm"},
+        {"zone": "Outer-Mid", "length": "9mm", "curl": "B", "diameter": "0.12mm"},
+        {"zone": "Outer", "length": "8mm", "curl": "B", "diameter": "0.12mm"}
+      ],
+      "products": [
+        "0.12mm Classic Lashes - J, B Curl",
+        "Lengths: 8mm, 9mm, 10mm",
+        "Standard adhesive"
+      ],
+      "application_notes": "Follow the client’s natural lash pattern. Avoid dramatic curls or spikes.[web:9][web:5][web:2]"
+    },
+    {
+      "name": "Wispy Kim K",
+      "category": "Hybrid",
+      "difficulty": "Advanced",
+      "description": "Inspired by celebrity looks, this hybrid map alternates spikes and wispy volume fans for a textured, fluttery finish. Great for trend-following clients who love a bold, dimensional lash line.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "D", "diameter": "0.07mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "D", "diameter": "0.07mm"},
+        {"zone": "Center", "length": "12mm", "curl": "D", "diameter": "0.07mm"}, 
+        {"zone": "Outer-Mid", "length": "14mm", "curl": "D", "diameter": "0.07mm"},
+        {"zone": "Outer", "length": "13mm", "curl": "D", "diameter": "0.05mm (spikes)"}
+      ],
+      "products": [
+        "0.05-0.07mm Volume and Classic Lashes - D Curl",
+        "Lengths: 8mm, 10mm, 12mm, 13mm, 14mm",
+        "Adhesive for hybrid application",
+        "Precision tweezer set"
+      ],
+      "application_notes": "Place spikes in alternating zones and fill between with fans; use longer, bolder lashes for spikes.[web:5][web:18][web:2]"
+    },
+    {
+      "name": "Volume Cat Eye",
+      "category": "Volume",
+      "difficulty": "Intermediate",
+      "description": "A more dramatic take on the classic cat eye, using full volume fans to create an intense, fanned elongation. Best for dramatic clients and those who prefer high-impact styles.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Center", "length": "11mm", "curl": "CC", "diameter": "0.07mm"},
+        {"zone": "Outer-Mid", "length": "12mm", "curl": "CC", "diameter": "0.07mm"},
+        {"zone": "Outer", "length": "14mm", "curl": "D", "diameter": "0.07mm"}
+      ],
+      "products": [
+        "0.07mm Volume Lashes - C, CC, D Curl",
+        "Lengths: 8mm, 10mm, 11mm, 12mm, 14mm"
+      ],
+      "application_notes": "Smoothly blend increases in length for best shape; avoid heavy fans on fragile outer lashes.[web:9][web:2][web:16]"
+    },
+    {
+      "name": "Open Eye",
+      "category": "Classic",
+      "difficulty": "Beginner",
+      "description": "Emphasizes the center of the lash line with longest lengths there, opening up and brightening the eyes. Widely flattering, especially for close-set or deep-set eyes.",
+      "zones": [
+        {"zone": "Inner", "length": "9mm", "curl": "B", "diameter": "0.12mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "C", "diameter": "0.12mm"},
+        {"zone": "Center", "length": "11mm", "curl": "C", "diameter": "0.12mm"},
+        {"zone": "Outer-Mid", "length": "10mm", "curl": "B", "diameter": "0.12mm"},
+        {"zone": "Outer", "length": "9mm", "curl": "B", "diameter": "0.12mm"}
+      ],
+      "products": [
+        "0.12mm Classic Lashes - B, C Curl",
+        "Lengths: 9mm, 10mm, 11mm"
+      ],
+      "application_notes": "Maximize volume in the center zone, blending outwards with shorter lengths.[web:2][web:5]"
+    },
+    {
+      "name": "Hybrid Doll Eye",
+      "category": "Hybrid",
+      "difficulty": "Intermediate",
+      "description": "Combines classic and volume lashes for a soft, rounded look that enhances the eyes while providing multidimensional fullness. Ideal for clients balancing subtlety and drama.",
+      "zones": [
+        {"zone": "Inner", "length": "9mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Inner-Mid", "length": "11mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Center", "length": "12mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Outer-Mid", "length": "11mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Outer", "length": "9mm", "curl": "C", "diameter": "0.07mm"}
+      ],
+      "products": [
+        "0.05-0.07mm Hybrid Lashes - C, D Curl",
+        "Lengths: 9mm, 11mm, 12mm"
+      ],
+      "application_notes": "Alternate single lashes and narrow fans; stagger spikes center for an open appearance.[web:2][web:5][web:16]"
+    },
+    {
+      "name": "Wet Look/Wet Set",
+      "category": "Volume",
+      "difficulty": "Advanced",
+      "description": "Mimics the effect of mascara-coated lashes: slender, glossy spikes achieved by using closed volume fans. Best for clients wanting a textured, trendy effect.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Center", "length": "12mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Outer-Mid", "length": "11mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Outer", "length": "9mm", "curl": "D", "diameter": "0.05mm"}
+      ],
+      "products": [
+        "0.05mm Volume Lashes - D Curl",
+        "Lengths: 8mm-12mm",
+        "Strong hold adhesive"
+      ],
+      "application_notes": "Apply narrow, closed fans for spikes; don't fan out—keep lashes parallel for best wet effect.[web:10][web:18]"
+    },
+    {
+      "name": "Anime/Manga",
+      "category": "Mega Volume",
+      "difficulty": "Advanced",
+      "description": "Features pronounced, dense spikes mixed with shorter volume fans for a playful, distinctly manga/anime-inspired effect. Popular among clients seeking statement, youthful, or cosplay looks.",
+      "zones": [
+        {"zone": "Inner", "length": "9mm", "curl": "D", "diameter": "0.03mm"},
+        {"zone": "Inner-Mid", "length": "12mm", "curl": "D", "diameter": "0.03mm"},
+        {"zone": "Center", "length": "15mm", "curl": "D", "diameter": "0.03mm"},
+        {"zone": "Outer-Mid", "length": "13mm", "curl": "D", "diameter": "0.03mm"},
+        {"zone": "Outer", "length": "11mm", "curl": "D", "diameter": "0.03mm"}
+      ],
+      "products": [
+        "0.03mm Mega Volume Lashes - D Curl",
+        "Lengths: 9mm, 11mm, 12mm, 13mm, 15mm"
+      ],
+      "application_notes": "Use closures for spikes; create high-contrast between spike and filler lengths. Isolate spikes precisely.[web:2][web:10]"
+    },
+    {
+      "name": "Fox Eye",
+      "category": "Volume",
+      "difficulty": "Advanced",
+      "description": "Creates a lifted, slanted effect with strong emphasis on the outer third of the eye, giving a sharp, fox-like appearance. Perfect for clients seeking the illusion of upturned, exotic eyes.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "D", "diameter": "0.07mm"},
+        {"zone": "Center", "length": "11mm", "curl": "D", "diameter": "0.07mm"},
+        {"zone": "Outer-Mid", "length": "13mm", "curl": "L", "diameter": "0.07mm"},
+        {"zone": "Outer", "length": "14mm", "curl": "L", "diameter": "0.07mm"}
+      ],
+      "products": [
+        "0.07mm Volume Lashes - C, D, L Curl",
+        "Lengths: 8-14mm"
+      ],
+      "application_notes": "Emphasize use of L curl on extreme outer zones for sharp lift. Lash lift tape may assist.[web:2]"
+    },
+    {
+      "name": "Squirrel",
+      "category": "Classic",
+      "difficulty": "Intermediate",
+      "description": "Blends the cat eye’s elongation with a mid-arch lift, tapering sharply past the brow arch. Suitable for clients looking for both lift and elongation with a natural contour.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "B", "diameter": "0.15mm"},
+        {"zone": "Inner-Mid", "length": "9mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Center", "length": "10mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Outer-Mid", "length": "11mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Outer", "length": "10mm", "curl": "C", "diameter": "0.15mm"}
+      ],
+      "products": [
+        "0.15mm Classic Lashes - B, C Curl",
+        "Lengths: 8-11mm"
+      ],
+      "application_notes": "Maximize the arch by progressively increasing length toward mid-outer zone, then taper down toward outer corner.[web:2][web:9]"
+    },
+    {
+      "name": "Wispy Volume",
+      "category": "Volume",
+      "difficulty": "Advanced",
+      "description": "Creates textured, airy volume with wispy spikes interspersed between fluffy fans for a soft, high-contrast look. Great for clients wanting sophisticated yet playful lashes.",
+      "zones": [
+        {"zone": "Inner", "length": "9mm", "curl": "CC", "diameter": "0.05mm"},
+        {"zone": "Inner-Mid", "length": "11mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Center", "length": "13mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Outer-Mid", "length": "11mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Outer", "length": "10mm", "curl": "CC", "diameter": "0.05mm"}
+      ],
+      "products": [
+        "0.05mm Volume Lashes - CC, D Curl",
+        "Lengths: 9mm-13mm"
+      ],
+      "application_notes": "Alternate closed and open fans for texture, adding extra length to inner or center zones for signature 'wispy' look.[web:14][web:5][web:18]"
+    },
+    {
+      "name": "Textured Hybrid",
+      "category": "Hybrid",
+      "difficulty": "Intermediate",
+      "description": "Mixes classic and volume lashes at alternating lengths and curls for a unique, multi-layered lash line. Favored by clients who want movement and dimension.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Center", "length": "12mm", "curl": "D", "diameter": "0.07mm"},
+        {"zone": "Outer-Mid", "length": "11mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Outer", "length": "9mm", "curl": "C", "diameter": "0.15mm"}
+      ],
+      "products": [
+        "0.07mm Volume, 0.15mm Classic Lashes - C, D Curl",
+        "Lengths: 8-12mm"
+      ],
+      "application_notes": "Strategically apply longer fans at intervals, interspersing with classic singles for dynamic movement.[web:14][web:8]"
+    },
+    {
+      "name": "Mega Volume Cat Eye",
+      "category": "Mega Volume",
+      "difficulty": "Advanced",
+      "description": "A hyper-dramatic, intensely full version of the cat eye using ultra-fine, high-dimension fans. Designed for clients with healthy natural lashes wanting ultimate density and flare.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "D", "diameter": "0.03mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "D", "diameter": "0.03mm"},
+        {"zone": "Center", "length": "12mm", "curl": "D", "diameter": "0.03mm"},
+        {"zone": "Outer-Mid", "length": "14mm", "curl": "D", "diameter": "0.03mm"},
+        {"zone": "Outer", "length": "15mm", "curl": "D", "diameter": "0.03mm"}
+      ],
+      "products": [
+        "0.03mm Mega Volume Lashes - D Curl",
+        "Lengths: 8mm, 10mm, 12mm, 14mm, 15mm"
+      ],
+      "application_notes": "Build large fans (10-15D+); ensure solid isolation for lash health. Fan symmetry is essential.[web:20][web:12]"
+    },
+    {
+      "name": "Wet Hybrid",
+      "category": "Hybrid",
+      "difficulty": "Advanced",
+      "description": "Carries the wet set texture into a hybrid map, mixing closed fans and classics for a subtle, spiked effect. Ideal for clients wanting both lightness and on-trend definition.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Center", "length": "12mm", "curl": "D", "diameter": "0.05mm"},
+        {"zone": "Outer-Mid", "length": "10mm", "curl": "C", "diameter": "0.07mm"},
+        {"zone": "Outer", "length": "8mm", "curl": "C", "diameter": "0.07mm"}
+      ],
+      "products": [
+        "0.07mm Hybrid, 0.05mm Volume Lashes - C, D Curl",
+        "Lengths: 8mm, 10mm, 12mm"
+      ],
+      "application_notes": "Carefully blend open and closed fans for subtle, soft spikes interspersed with light singles.[web:10][web:18]"
+    },
+    {
+      "name": "Brown Lashes/Natural Brown Set",
+      "category": "Classic",
+      "difficulty": "Beginner",
+      "description": "Uses brown instead of black lash extensions for a softer, realistic enhancement. Best for clients with lighter natural lashes or hair colors, providing gentle dimension.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "B", "diameter": "0.12mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "B", "diameter": "0.12mm"},
+        {"zone": "Center", "length": "11mm", "curl": "C", "diameter": "0.12mm"},
+        {"zone": "Outer-Mid", "length": "10mm", "curl": "B", "diameter": "0.12mm"},
+        {"zone": "Outer", "length": "9mm", "curl": "B", "diameter": "0.12mm"}
+      ],
+      "products": [
+        "0.12mm Classic Lashes - B, C Curl (Brown)",
+        "Lengths: 8mm–11mm"
+      ],
+      "application_notes": "Mix shades of brown for added dimension; finish with light B curl on outer for natural effect.[web:10][web:11]"
+    },
+    {
+      "name": "Textured Classic",
+      "category": "Classic",
+      "difficulty": "Intermediate",
+      "description": "Incorporates varied lash lengths and curls for a naturally full yet subtle line. Ideal as an upgrade from classic for clients desiring gentle volume and movement.",
+      "zones": [
+        {"zone": "Inner", "length": "8mm", "curl": "B", "diameter": "0.15mm"},
+        {"zone": "Inner-Mid", "length": "10mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Center", "length": "11mm", "curl": "C", "diameter": "0.15mm"},
+        {"zone": "Outer-Mid", "length": "10mm", "curl": "B", "diameter": "0.15mm"},
+        {"zone": "Outer", "length": "9mm", "curl": "B", "diameter": "0.15mm"}
+      ],
+      "products": [
+        "0.15mm Classic Lashes - B, C Curl",
+        "Lengths: 8-11mm"
+      ],
+      "application_notes": "Alternate curl directions and length by 1-2mm for a fluttery, dense look without heavy fans.[web:14][web:8]"
+    }
+  ]
+  

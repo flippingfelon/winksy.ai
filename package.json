@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "import-lash-maps": "node import-lash-maps.js",
     "mcp:start": "cd ../mcp-server && npm start",
     "mcp:test": "cd ../mcp-server && npm test",
     "mcp:interactive": "cd ../mcp-server && node test-mcp.js",
