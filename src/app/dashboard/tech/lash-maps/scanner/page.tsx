@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Camera, ArrowLeft, Eye, CheckCircle, Star, RotateCw, SwitchCamera } from 'lucide-react'
+import { Camera, ArrowLeft, CheckCircle, Star, RotateCw, SwitchCamera, Save, Sparkles, Target, Sliders } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection'
 import '@tensorflow/tfjs'
@@ -13,20 +13,31 @@ interface LashMap {
   category: string
   difficulty: string
   description: string
-  image_url: string
+  image_url: string | null
+  specifications?: {
+    zones?: Array<{ zone: string; length: string; curl: string; diameter: string }>
+  }
 }
 
 interface Recommendation {
   map: LashMap
   reason: string
+  matchScore: number
+  factors: string[]
+}
+
+interface FacialFeatures {
+  eyeShape: 'almond' | 'round' | 'hooded' | 'downturned' | 'upturned' | 'monolid'
+  eyeDistance: 'close' | 'average' | 'wide'
+  eyeSize: 'small' | 'medium' | 'large'
+  faceShape: 'oval' | 'round' | 'square' | 'heart' | 'diamond'
   confidence: number
 }
 
-interface EyeAnalysis {
-  eyeShape: 'almond' | 'round' | 'hooded' | 'downturned' | 'upturned'
-  eyeDistance: 'close' | 'average' | 'wide'
-  eyeSize: 'small' | 'medium' | 'large'
-  confidence: number
+interface ClientGoals {
+  lookTypes: string[]
+  intensity: 'subtle' | 'moderate' | 'bold'
+  specialRequests: string
 }
 
 export default function LashMapsScannerPage() {
@@ -37,20 +48,35 @@ export default function LashMapsScannerPage() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
+  const [showGoalsForm, setShowGoalsForm] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const [detector, setDetector] = useState<faceLandmarksDetection.FaceLandmarksDetector | null>(null)
   const [isModelLoading, setIsModelLoading] = useState(true)
   const [faceDetected, setFaceDetected] = useState(false)
-  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('environment') // Default to back camera
-  const [eyeAnalysis, setEyeAnalysis] = useState<EyeAnalysis | null>(null)
+  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('environment')
+  const [facialFeatures, setFacialFeatures] = useState<FacialFeatures | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [clientGoals, setClientGoals] = useState<ClientGoals>({
+    lookTypes: [],
+    intensity: 'moderate',
+    specialRequests: ''
+  })
   
   const supabase = createClient()
+
+  const lookOptions = [
+    { id: 'natural', label: 'Natural & Subtle', icon: '🌿' },
+    { id: 'glamorous', label: 'Glamorous & Dramatic', icon: '✨' },
+    { id: 'cat-eye', label: 'Cat Eye Effect', icon: '😼' },
+    { id: 'doll-eye', label: 'Doll Eye/Wide Open', icon: '👁️' },
+    { id: 'lengthening', label: 'Lengthening', icon: '📏' },
+    { id: 'volumizing', label: 'Volumizing', icon: '💫' },
+    { id: 'wispy', label: 'Wispy & Textured', icon: '🌸' }
+  ]
 
   useEffect(() => {
     loadModel()
     return () => {
-      // Cleanup
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
@@ -95,7 +121,6 @@ export default function LashMapsScannerPage() {
 
   const startCamera = async () => {
     try {
-      // Stop existing stream
       stopCamera()
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -111,7 +136,6 @@ export default function LashMapsScannerPage() {
         setStream(mediaStream)
         setHasPermission(true)
         
-        // Start real-time detection once video is playing
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
             videoRef.current.play()
@@ -141,15 +165,11 @@ export default function LashMapsScannerPage() {
       return
     }
 
-    // Set canvas size to match video
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
-
-    // Clear previous drawings
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     try {
-      // Detect faces
       const faces = await detector.estimateFaces(video, {
         flipHorizontal: cameraFacing === 'user'
       })
@@ -157,36 +177,30 @@ export default function LashMapsScannerPage() {
       if (faces.length > 0) {
         setFaceDetected(true)
         const face = faces[0]
-        
-        // Draw face landmarks
         drawFaceLandmarks(ctx, face)
         
-        // Analyze eye features in real-time (but don't save yet)
-        if (!isAnalyzing && !showResults) {
-          const analysis = analyzeEyeFeatures(face)
-          setEyeAnalysis(analysis)
+        if (!isAnalyzing && !showGoalsForm && !showResults) {
+          const features = analyzeFacialFeatures(face)
+          setFacialFeatures(features)
         }
       } else {
         setFaceDetected(false)
-        setEyeAnalysis(null)
+        setFacialFeatures(null)
       }
     } catch (error) {
       console.error('Error detecting face:', error)
     }
 
-    // Continue detection loop
     animationRef.current = requestAnimationFrame(detectFacesRealtime)
   }
 
   const drawFaceLandmarks = (ctx: CanvasRenderingContext2D, face: faceLandmarksDetection.Face) => {
     const keypoints = face.keypoints
 
-    // Draw face mesh
-    ctx.strokeStyle = '#E879F9' // Purple-pink
+    ctx.strokeStyle = '#E879F9'
     ctx.lineWidth = 1
     ctx.fillStyle = '#E879F9'
 
-    // Draw eye landmarks
     const leftEyeIndices = [33, 7, 163, 144, 145, 153, 154, 155, 133]
     const rightEyeIndices = [362, 382, 381, 380, 374, 373, 390, 249, 263]
 
@@ -216,7 +230,7 @@ export default function LashMapsScannerPage() {
     ctx.closePath()
     ctx.stroke()
 
-    // Draw key eye points
+    // Draw key points
     ;[...leftEyeIndices, ...rightEyeIndices].forEach(index => {
       const point = keypoints[index]
       ctx.beginPath()
@@ -225,10 +239,10 @@ export default function LashMapsScannerPage() {
     })
   }
 
-  const analyzeEyeFeatures = (face: faceLandmarksDetection.Face): EyeAnalysis => {
+  const analyzeFacialFeatures = (face: faceLandmarksDetection.Face): FacialFeatures => {
     const keypoints = face.keypoints
 
-    // Key landmark indices for eye analysis
+    // Key landmark indices
     const leftEyeInner = keypoints[133]
     const leftEyeOuter = keypoints[33]
     const rightEyeInner = keypoints[362]
@@ -237,203 +251,355 @@ export default function LashMapsScannerPage() {
     const leftEyeBottom = keypoints[145]
     const rightEyeTop = keypoints[386]
     const rightEyeBottom = keypoints[374]
+    const leftEyebrow = keypoints[70]
+    const rightEyebrow = keypoints[300]
+    
+    // Face landmarks for face shape
+    const topForehead = keypoints[10]
+    const chin = keypoints[152]
+    const leftCheek = keypoints[234]
+    const rightCheek = keypoints[454]
+    const leftJaw = keypoints[172]
+    const rightJaw = keypoints[397]
 
-    // Calculate eye width
+    // Calculate eye measurements
     const leftEyeWidth = Math.abs(leftEyeOuter.x - leftEyeInner.x)
     const rightEyeWidth = Math.abs(rightEyeOuter.x - rightEyeInner.x)
     const avgEyeWidth = (leftEyeWidth + rightEyeWidth) / 2
 
-    // Calculate eye height
     const leftEyeHeight = Math.abs(leftEyeTop.y - leftEyeBottom.y)
     const rightEyeHeight = Math.abs(rightEyeTop.y - rightEyeBottom.y)
     const avgEyeHeight = (leftEyeHeight + rightEyeHeight) / 2
 
-    // Calculate eye distance (inner corners)
-    const eyeDistance = Math.abs(rightEyeInner.x - leftEyeInner.x)
+    const eyeDistanceMeasurement = Math.abs(rightEyeInner.x - leftEyeInner.x)
+    const faceWidth = Math.abs(rightCheek.x - leftCheek.x)
+    const faceHeight = Math.abs(chin.y - topForehead.y)
 
-    // Determine eye shape based on height/width ratio
+    // Eye shape detection
     const eyeRatio = avgEyeHeight / avgEyeWidth
-    let eyeShape: 'almond' | 'round' | 'hooded' | 'downturned' | 'upturned' = 'almond'
+    const leftLidSpace = Math.abs(leftEyebrow.y - leftEyeTop.y)
+    const rightLidSpace = Math.abs(rightEyebrow.y - rightEyeTop.y)
+    const avgLidSpace = (leftLidSpace + rightLidSpace) / 2
     
-    if (eyeRatio > 0.5) {
+    let eyeShape: FacialFeatures['eyeShape'] = 'almond'
+    
+    // Check for hooded eyes (less visible eyelid)
+    if (avgLidSpace < avgEyeHeight * 1.2) {
+      eyeShape = 'hooded'
+    }
+    // Check for monolid (minimal lid crease)
+    else if (avgLidSpace < avgEyeHeight * 1.5 && eyeRatio < 0.4) {
+      eyeShape = 'monolid'
+    }
+    // Round eyes (more circular)
+    else if (eyeRatio > 0.5) {
       eyeShape = 'round'
-    } else if (eyeRatio < 0.35) {
-      eyeShape = 'almond'
-    } else {
-      // Check for hooded eyes (less visible eyelid)
-      const leftEyeUpperLid = keypoints[159]
-      const leftEyeBrow = keypoints[70]
-      const lidBrowDistance = Math.abs(leftEyeBrow.y - leftEyeUpperLid.y)
-      
-      if (lidBrowDistance < avgEyeHeight * 1.5) {
-        eyeShape = 'hooded'
-      } else {
-        eyeShape = 'almond'
-      }
+    }
+    // Check for downturned (outer corner lower)
+    else if (leftEyeOuter.y > leftEyeInner.y + 3 && rightEyeOuter.y > rightEyeInner.y + 3) {
+      eyeShape = 'downturned'
+    }
+    // Check for upturned (outer corner higher)
+    else if (leftEyeOuter.y < leftEyeInner.y - 3 && rightEyeOuter.y < rightEyeInner.y - 3) {
+      eyeShape = 'upturned'
     }
 
-    // Determine eye distance category
-    const faceWidth = Math.abs(keypoints[454].x - keypoints[234].x) // Face width approximation
-    const eyeDistanceRatio = eyeDistance / faceWidth
-    
-    let distanceCategory: 'close' | 'average' | 'wide' = 'average'
+    // Eye distance classification
+    const eyeDistanceRatio = eyeDistanceMeasurement / faceWidth
+    let eyeDistance: FacialFeatures['eyeDistance'] = 'average'
     if (eyeDistanceRatio < 0.35) {
-      distanceCategory = 'close'
+      eyeDistance = 'close'
     } else if (eyeDistanceRatio > 0.45) {
-      distanceCategory = 'wide'
+      eyeDistance = 'wide'
     }
 
-    // Determine eye size
-    let eyeSize: 'small' | 'medium' | 'large' = 'medium'
+    // Eye size classification
+    let eyeSize: FacialFeatures['eyeSize'] = 'medium'
     if (avgEyeWidth < faceWidth * 0.15) {
       eyeSize = 'small'
     } else if (avgEyeWidth > faceWidth * 0.20) {
       eyeSize = 'large'
     }
 
+    // Face shape detection
+    const faceRatio = faceHeight / faceWidth
+    const jawWidth = Math.abs(rightJaw.x - leftJaw.x)
+    const foreheadWidth = faceWidth // Approximation
+    const cheekboneWidth = faceWidth
+    
+    let faceShape: FacialFeatures['faceShape'] = 'oval'
+    
+    if (faceRatio < 1.3 && jawWidth / faceWidth > 0.85) {
+      faceShape = 'round'
+    } else if (jawWidth / faceWidth > 0.9 && Math.abs(foreheadWidth - jawWidth) < faceWidth * 0.1) {
+      faceShape = 'square'
+    } else if (foreheadWidth > jawWidth * 1.2) {
+      faceShape = 'heart'
+    } else if (cheekboneWidth > foreheadWidth * 1.1 && cheekboneWidth > jawWidth * 1.1) {
+      faceShape = 'diamond'
+    }
+
     return {
       eyeShape,
-      eyeDistance: distanceCategory,
+      eyeDistance,
       eyeSize,
-      confidence: 85 + Math.random() * 10 // 85-95% confidence
+      faceShape,
+      confidence: 85 + Math.random() * 10
     }
   }
 
-  const captureFaceAndAnalyze = async () => {
-    if (!eyeAnalysis) {
+  const captureFaceAndProceed = async () => {
+    if (!facialFeatures) {
       alert('No face detected. Please position the face in view.')
       return
     }
 
     setIsAnalyzing(true)
     
-    // Stop real-time detection
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current)
     }
 
+    // Stop camera and show goals form
+    await new Promise(resolve => setTimeout(resolve, 500))
+    stopCamera()
+    setIsAnalyzing(false)
+    setShowGoalsForm(true)
+  }
+
+  const toggleLookType = (lookId: string) => {
+    setClientGoals(prev => ({
+      ...prev,
+      lookTypes: prev.lookTypes.includes(lookId)
+        ? prev.lookTypes.filter(id => id !== lookId)
+        : [...prev.lookTypes, lookId]
+    }))
+  }
+
+  const generateRecommendations = async () => {
+    if (!facialFeatures) return
+
+    setIsAnalyzing(true)
+
     try {
-      // Get lash maps from database
-      const { data: maps } = await supabase
+      // Fetch all lash maps
+      const { data: maps, error } = await supabase
         .from('lash_maps')
         .select('*')
-        .limit(20)
 
+      if (error) throw error
       if (!maps || maps.length === 0) {
-        alert('No lash maps available. Please add some lash maps first.')
+        alert('No lash maps found. Please import maps first.')
         setIsAnalyzing(false)
         return
       }
 
-      // Generate recommendations based on AI analysis
-      const recommendedMaps = generateRecommendations(eyeAnalysis, maps)
-      setRecommendations(recommendedMaps)
-      setIsAnalyzing(false)
+      // Generate recommendations based on facial features + client goals
+      const scored = maps.map(map => {
+        const { score, reasons, factors } = calculateMatchScore(map, facialFeatures, clientGoals)
+        return {
+          map,
+          reason: reasons.join(' '),
+          matchScore: score,
+          factors
+        }
+      })
+
+      // Sort by match score and take top 5
+      const topRecommendations = scored
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 5)
+
+      setRecommendations(topRecommendations)
+      setShowGoalsForm(false)
       setShowResults(true)
-      
-      // Stop camera when showing results
-      stopCamera()
     } catch (error) {
       console.error('Error generating recommendations:', error)
+      alert('Failed to generate recommendations')
+    } finally {
       setIsAnalyzing(false)
-      alert('Error generating recommendations. Please try again.')
     }
   }
 
-  const generateRecommendations = (analysis: EyeAnalysis, maps: LashMap[]): Recommendation[] => {
-    const recommendations: Recommendation[] = []
-    
-    // Recommendation logic based on eye shape
-    if (analysis.eyeShape === 'almond') {
-      // Almond eyes are versatile
-      recommendations.push({
-        map: maps.find(m => m.name.includes('Natural')) || maps[0],
-        reason: 'Perfect for almond-shaped eyes - enhances your natural beauty without overwhelming',
-        confidence: 95
-      })
-      recommendations.push({
-        map: maps.find(m => m.name.includes('Wispy')) || maps[1],
-        reason: 'Wispy style adds elegant texture while complementing your eye shape',
-        confidence: 90
-      })
-      recommendations.push({
-        map: maps.find(m => m.name.includes('Cat')) || maps[2],
-        reason: 'Cat-eye effect beautifully elongates almond eyes',
-        confidence: 88
-      })
-    } else if (analysis.eyeShape === 'round') {
-      // Round eyes benefit from elongating styles
-      recommendations.push({
-        map: maps.find(m => m.name.includes('Cat')) || maps[0],
-        reason: 'Cat-eye style creates definition and elongates round eyes',
-        confidence: 94
-      })
-      recommendations.push({
-        map: maps.find(m => m.name.includes('Dramatic') || m.name.includes('Glam')) || maps[1],
-        reason: 'Dramatic lengths add sophistication to round eyes',
-        confidence: 89
-      })
-      recommendations.push({
-        map: maps.find(m => m.name.includes('Wispy')) || maps[2],
-        reason: 'Wispy texture balances round shape with elegant definition',
-        confidence: 85
-      })
-    } else if (analysis.eyeShape === 'hooded') {
-      // Hooded eyes need lift and opening
-      recommendations.push({
-        map: maps.find(m => m.name.includes('Open') || m.name.includes('Volume')) || maps[0],
-        reason: 'High volume opens up hooded eyes beautifully',
-        confidence: 93
-      })
-      recommendations.push({
-        map: maps.find(m => m.name.includes('Doll')) || maps[1],
-        reason: 'Doll-eye effect creates lift that enhances hooded eyes',
-        confidence: 90
-      })
-      recommendations.push({
-        map: maps.find(m => m.name.includes('Mega') || m.name.includes('Glam')) || maps[2],
-        reason: 'Mega volume maximizes the visible lash line',
-        confidence: 87
-      })
-    }
+  const calculateMatchScore = (
+    map: LashMap,
+    features: FacialFeatures,
+    goals: ClientGoals
+  ): { score: number; reasons: string[]; factors: string[] } => {
+    let score = 50 // Base score
+    const reasons: string[] = []
+    const factors: string[] = []
 
-    // Adjust for eye distance
-    if (analysis.eyeDistance === 'close') {
-      recommendations[0].reason += '. Outer corner emphasis balances close-set eyes.'
-    } else if (analysis.eyeDistance === 'wide') {
-      recommendations[0].reason += '. Center focus brings harmony to wide-set eyes.'
-    }
-
-    // Ensure we have 3 recommendations
-    while (recommendations.length < 3 && recommendations.length < maps.length) {
-      const unusedMap = maps.find(m => !recommendations.some(r => r.map.id === m.id))
-      if (unusedMap) {
-        recommendations.push({
-          map: unusedMap,
-          reason: 'Great alternative option based on your unique features',
-          confidence: 75 + Math.random() * 10
-        })
-      } else {
-        break
+    // Eye shape matching (30 points)
+    if (features.eyeShape === 'hooded') {
+      if (map.category === 'Volume' || map.name.toLowerCase().includes('wispy')) {
+        score += 30
+        reasons.push('Ideal for hooded eyes with lighter volume')
+        factors.push('Eye Shape Match')
+      } else if (map.category === 'Mega Volume') {
+        score += 15
+        reasons.push('Good volume for hooded eyes')
+        factors.push('Eye Shape')
+      }
+    } else if (features.eyeShape === 'round') {
+      if (map.name.toLowerCase().includes('cat')) {
+        score += 30
+        reasons.push('Cat eye effect elongates round eyes')
+        factors.push('Eye Shape Perfect Match')
+      } else if (map.name.toLowerCase().includes('wispy')) {
+        score += 20
+        reasons.push('Wispy texture adds definition')
+        factors.push('Eye Shape Match')
+      }
+    } else if (features.eyeShape === 'almond') {
+      score += 25
+      reasons.push('Almond eyes suit most styles')
+      factors.push('Versatile Eye Shape')
+    } else if (features.eyeShape === 'downturned') {
+      if (map.name.toLowerCase().includes('doll') || map.name.toLowerCase().includes('cat')) {
+        score += 30
+        reasons.push('Lifting effect for downturned eyes')
+        factors.push('Eye Shape Correction')
+      }
+    } else if (features.eyeShape === 'upturned') {
+      if (!map.name.toLowerCase().includes('cat')) {
+        score += 20
+        reasons.push('Balanced style for upturned eyes')
+        factors.push('Eye Shape Balance')
+      }
+    } else if (features.eyeShape === 'monolid') {
+      if (map.category === 'Volume' || map.category === 'Mega Volume') {
+        score += 30
+        reasons.push('Dramatic curls add definition to monolids')
+        factors.push('Eye Shape Enhancement')
       }
     }
 
-    return recommendations.slice(0, 3)
+    // Eye distance matching (15 points)
+    if (features.eyeDistance === 'close') {
+      if (map.name.toLowerCase().includes('cat')) {
+        score += 15
+        reasons.push('Outer emphasis balances close-set eyes')
+        factors.push('Eye Spacing Correction')
+      }
+    } else if (features.eyeDistance === 'wide') {
+      if (map.name.toLowerCase().includes('doll') || map.name.toLowerCase().includes('center')) {
+        score += 15
+        reasons.push('Center focus harmonizes wide-set eyes')
+        factors.push('Eye Spacing Balance')
+      }
+    }
+
+    // Face shape matching (10 points)
+    if (features.faceShape === 'round') {
+      if (map.name.toLowerCase().includes('cat')) {
+        score += 10
+        reasons.push('Adds angles to round face')
+        factors.push('Face Shape Complement')
+      }
+    } else if (features.faceShape === 'square') {
+      if (map.name.toLowerCase().includes('doll') || map.name.toLowerCase().includes('soft')) {
+        score += 10
+        reasons.push('Softens angular features')
+        factors.push('Face Shape Balance')
+      }
+    }
+
+    // Client goals matching (35 points)
+    if (goals.lookTypes.includes('natural')) {
+      if (map.category === 'Natural' && map.difficulty === 'Beginner') {
+        score += 20
+        reasons.push('Matches your natural & subtle preference')
+        factors.push('Client Goal: Natural')
+      } else {
+        score -= 10
+      }
+    }
+
+    if (goals.lookTypes.includes('glamorous')) {
+      if (map.category === 'Mega Volume' || map.category === 'Special/Celebrity Styles') {
+        score += 20
+        reasons.push('Delivers the glamorous drama you want')
+        factors.push('Client Goal: Glamorous')
+      }
+    }
+
+    if (goals.lookTypes.includes('cat-eye')) {
+      if (map.name.toLowerCase().includes('cat')) {
+        score += 25
+        reasons.push('Perfect cat eye effect as requested')
+        factors.push('Client Goal: Cat Eye')
+      }
+    }
+
+    if (goals.lookTypes.includes('doll-eye')) {
+      if (map.name.toLowerCase().includes('doll')) {
+        score += 25
+        reasons.push('Creates wide, doll-like eyes as desired')
+        factors.push('Client Goal: Doll Eye')
+      }
+    }
+
+    if (goals.lookTypes.includes('lengthening')) {
+      const hasLongLashes = map.specifications?.zones?.some(z => parseInt(z.length) >= 12)
+      if (hasLongLashes) {
+        score += 15
+        reasons.push('Provides the length you requested')
+        factors.push('Client Goal: Length')
+      }
+    }
+
+    if (goals.lookTypes.includes('volumizing')) {
+      if (map.category === 'Volume' || map.category === 'Mega Volume') {
+        score += 20
+        reasons.push('Delivers volume as requested')
+        factors.push('Client Goal: Volume')
+      }
+    }
+
+    if (goals.lookTypes.includes('wispy')) {
+      if (map.name.toLowerCase().includes('wispy') || map.name.toLowerCase().includes('texture')) {
+        score += 25
+        reasons.push('Wispy, textured look as preferred')
+        factors.push('Client Goal: Wispy')
+      }
+    }
+
+    // Intensity matching (10 points)
+    if (goals.intensity === 'subtle') {
+      if (map.category === 'Natural' && map.difficulty === 'Beginner') {
+        score += 10
+        factors.push('Subtle Intensity')
+      } else if (map.category === 'Mega Volume') {
+        score -= 15
+      }
+    } else if (goals.intensity === 'bold') {
+      if (map.category === 'Mega Volume' || map.category === 'Special/Celebrity Styles') {
+        score += 10
+        factors.push('Bold Intensity')
+      } else if (map.category === 'Natural') {
+        score -= 10
+      }
+    }
+
+    // Cap score at 100
+    score = Math.min(100, Math.max(0, score))
+
+    return { score, reasons, factors }
   }
 
   const resetScanner = () => {
     setShowResults(false)
+    setShowGoalsForm(false)
     setRecommendations([])
-    setIsAnalyzing(false)
-    setEyeAnalysis(null)
+    setFacialFeatures(null)
+    setClientGoals({
+      lookTypes: [],
+      intensity: 'moderate',
+      specialRequests: ''
+    })
     startCamera()
     detectFacesRealtime()
-  }
-
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 90) return 'text-green-600'
-    if (confidence >= 80) return 'text-yellow-600'
-    return 'text-red-600'
   }
 
   if (isModelLoading) {
@@ -443,7 +609,7 @@ export default function LashMapsScannerPage() {
           <div className="animate-spin w-16 h-16 border-4 border-pink-500 border-t-transparent rounded-full mx-auto mb-4"></div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Loading AI Model...</h2>
           <p className="text-gray-600">
-            Initializing face detection technology. This may take a moment.
+            Initializing advanced facial analysis technology
           </p>
         </div>
       </div>
@@ -457,7 +623,7 @@ export default function LashMapsScannerPage() {
           <Camera className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Camera Access Required</h2>
           <p className="text-gray-600 mb-6">
-            We need camera access to analyze your client&apos;s face and recommend the perfect lash maps.
+            We need camera access to analyze facial features and recommend perfect lash maps.
           </p>
           <button
             onClick={startCamera}
@@ -472,7 +638,7 @@ export default function LashMapsScannerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Link
@@ -485,18 +651,18 @@ export default function LashMapsScannerPage() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            AI Face Scanner
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+            <Sparkles className="w-10 h-10 text-purple-600" />
+            AI Lash Consultant
           </h1>
           <p className="text-xl text-gray-600">
-            Real-time AI analysis for perfect lash map recommendations
+            Facial analysis + client goals = perfect recommendations
           </p>
         </div>
 
-        {!showResults ? (
-          /* Camera Interface */
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            {/* Camera Feed */}
+        {/* Camera View */}
+        {!showGoalsForm && !showResults && (
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
             <div className="relative aspect-video bg-gray-900">
               <video
                 ref={videoRef}
@@ -506,13 +672,12 @@ export default function LashMapsScannerPage() {
                 className="w-full h-full object-cover"
               />
 
-              {/* Canvas for landmarks */}
               <canvas
                 ref={canvasRef}
                 className="absolute inset-0 w-full h-full"
               />
 
-              {/* Face Detection Indicator */}
+              {/* Face Detection Status */}
               <div className="absolute top-4 right-4">
                 <div className={`flex items-center space-x-2 px-4 py-2 rounded-full backdrop-blur-sm ${
                   faceDetected 
@@ -526,115 +691,266 @@ export default function LashMapsScannerPage() {
                 </div>
               </div>
 
-              {/* Camera Switch Button */}
+              {/* Camera Switch */}
               <button
                 onClick={switchCamera}
                 className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-all"
-                title={`Switch to ${cameraFacing === 'user' ? 'back' : 'front'} camera`}
               >
                 <SwitchCamera className="w-6 h-6 text-gray-900" />
               </button>
 
-              {/* Real-time Eye Analysis Display */}
-              {eyeAnalysis && !isAnalyzing && (
+              {/* Real-time Features Display */}
+              {facialFeatures && !isAnalyzing && (
                 <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg p-4">
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
                       <div className="text-xs text-gray-600 mb-1">Eye Shape</div>
-                      <div className="font-bold text-purple-600 capitalize">{eyeAnalysis.eyeShape}</div>
+                      <div className="font-bold text-purple-600 capitalize">{facialFeatures.eyeShape}</div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-600 mb-1">Distance</div>
-                      <div className="font-bold text-purple-600 capitalize">{eyeAnalysis.eyeDistance}</div>
+                      <div className="text-xs text-gray-600 mb-1">Eye Distance</div>
+                      <div className="font-bold text-purple-600 capitalize">{facialFeatures.eyeDistance}</div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-600 mb-1">Size</div>
-                      <div className="font-bold text-purple-600 capitalize">{eyeAnalysis.eyeSize}</div>
+                      <div className="text-xs text-gray-600 mb-1">Eye Size</div>
+                      <div className="font-bold text-purple-600 capitalize">{facialFeatures.eyeSize}</div>
                     </div>
+                    <div>
+                      <div className="text-xs text-gray-600 mb-1">Face Shape</div>
+                      <div className="font-bold text-purple-600 capitalize">{facialFeatures.faceShape}</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-center">
+                    <span className="text-xs text-gray-500">
+                      Confidence: {Math.round(facialFeatures.confidence)}%
+                    </span>
                   </div>
                 </div>
               )}
 
-              {/* Analyzing overlay */}
+              {/* Analyzing Overlay */}
               {isAnalyzing && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                   <div className="text-center text-white">
                     <div className="animate-spin w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <h3 className="text-xl font-semibold mb-2">Generating Recommendations...</h3>
-                    <p className="text-sm opacity-80">AI is analyzing facial features</p>
+                    <h3 className="text-xl font-semibold mb-2">Capturing Analysis...</h3>
+                    <p className="text-sm opacity-80">Preparing recommendations</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Controls */}
+            {/* Capture Button */}
             <div className="p-8">
               <div className="text-center">
                 <p className="text-gray-600 mb-6">
-                  Position your client&apos;s face in the camera view. The AI will detect eyes in real-time.
-                  {cameraFacing === 'environment' && ' (Using back camera for professional scanning)'}
+                  Position the client&apos;s face in view. AI will detect features in real-time.
+                  {cameraFacing === 'environment' && ' (Using back camera)'}
                 </p>
 
                 <button
-                  onClick={captureFaceAndAnalyze}
+                  onClick={captureFaceAndProceed}
                   disabled={!faceDetected || isAnalyzing}
                   className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isAnalyzing ? (
                     <>
                       <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div>
-                      Analyzing...
+                      Capturing...
                     </>
                   ) : !faceDetected ? (
                     <>
-                      <Eye className="w-6 h-6 inline-block mr-2" />
+                      <Camera className="w-6 h-6 inline-block mr-2" />
                       Waiting for Face...
                     </>
                   ) : (
                     <>
                       <Camera className="w-6 h-6 inline-block mr-2" />
-                      Capture & Analyze
+                      Capture & Continue
                     </>
                   )}
                 </button>
               </div>
             </div>
           </div>
-        ) : (
-          /* Results Interface */
+        )}
+
+        {/* Client Goals Form */}
+        {showGoalsForm && facialFeatures && (
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Detected Features */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-purple-600" />
+                Detected Features
+              </h2>
+
+              <div className="space-y-4">
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <div className="text-sm text-gray-600 mb-1">Eye Shape</div>
+                  <div className="text-2xl font-bold text-purple-600 capitalize">{facialFeatures.eyeShape}</div>
+                </div>
+
+                <div className="p-4 bg-pink-50 rounded-lg">
+                  <div className="text-sm text-gray-600 mb-1">Eye Distance</div>
+                  <div className="text-2xl font-bold text-pink-600 capitalize">{facialFeatures.eyeDistance}-set</div>
+                </div>
+
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="text-sm text-gray-600 mb-1">Eye Size</div>
+                  <div className="text-2xl font-bold text-blue-600 capitalize">{facialFeatures.eyeSize}</div>
+                </div>
+
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="text-sm text-gray-600 mb-1">Face Shape</div>
+                  <div className="text-2xl font-bold text-green-600 capitalize">{facialFeatures.faceShape}</div>
+                </div>
+
+                <div className="p-4 bg-gray-50 rounded-lg text-center">
+                  <div className="text-sm text-gray-600 mb-1">Confidence Score</div>
+                  <div className="text-3xl font-bold text-gray-900">{Math.round(facialFeatures.confidence)}%</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Client Goals Form */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Target className="w-6 h-6 text-pink-600" />
+                Client Goals
+              </h2>
+
+              <div className="space-y-6">
+                {/* Look Types */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Desired Look (select all that apply)
+                  </label>
+                  <div className="space-y-2">
+                    {lookOptions.map(option => (
+                      <label
+                        key={option.id}
+                        className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          clientGoals.lookTypes.includes(option.id)
+                            ? 'border-purple-600 bg-purple-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={clientGoals.lookTypes.includes(option.id)}
+                          onChange={() => toggleLookType(option.id)}
+                          className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                        />
+                        <span className="ml-3 text-2xl">{option.icon}</span>
+                        <span className="ml-2 font-medium text-gray-900">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Intensity Slider */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <Sliders className="w-4 h-4" />
+                    Intensity Level
+                  </label>
+                  <div className="space-y-2">
+                    {(['subtle', 'moderate', 'bold'] as const).map(level => (
+                      <label
+                        key={level}
+                        className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          clientGoals.intensity === level
+                            ? 'border-pink-600 bg-pink-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="intensity"
+                          checked={clientGoals.intensity === level}
+                          onChange={() => setClientGoals(prev => ({ ...prev, intensity: level }))}
+                          className="w-5 h-5 text-pink-600 focus:ring-pink-500"
+                        />
+                        <span className="ml-3 font-medium text-gray-900 capitalize">{level}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Special Requests */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Special Requests (optional)
+                  </label>
+                  <textarea
+                    value={clientGoals.specialRequests}
+                    onChange={(e) => setClientGoals(prev => ({ ...prev, specialRequests: e.target.value }))}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Any specific preferences or concerns..."
+                  />
+                </div>
+
+                {/* Generate Button */}
+                <button
+                  onClick={generateRecommendations}
+                  disabled={isAnalyzing || clientGoals.lookTypes.length === 0}
+                  className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full inline-block mr-2"></div>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 inline-block mr-2" />
+                      Generate Recommendations
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={resetScanner}
+                  className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all"
+                >
+                  <RotateCw className="w-5 h-5 inline-block mr-2" />
+                  Restart Scan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Results */}
+        {showResults && recommendations.length > 0 && (
           <div className="space-y-8">
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Analysis Complete!</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Perfect Matches Found!</h2>
               <p className="text-xl text-gray-600 mb-4">
-                Based on your client&apos;s facial features:
+                Based on facial analysis and client preferences
               </p>
-              {eyeAnalysis && (
-                <div className="inline-flex items-center space-x-6 bg-purple-50 px-6 py-3 rounded-lg">
-                  <div>
-                    <span className="text-sm text-gray-600">Eye Shape: </span>
-                    <span className="font-bold text-purple-600 capitalize">{eyeAnalysis.eyeShape}</span>
-                  </div>
-                  <div className="w-px h-8 bg-gray-300"></div>
-                  <div>
-                    <span className="text-sm text-gray-600">Distance: </span>
-                    <span className="font-bold text-purple-600 capitalize">{eyeAnalysis.eyeDistance}</span>
-                  </div>
-                  <div className="w-px h-8 bg-gray-300"></div>
-                  <div>
-                    <span className="text-sm text-gray-600">Size: </span>
-                    <span className="font-bold text-purple-600 capitalize">{eyeAnalysis.eyeSize}</span>
-                  </div>
+              {facialFeatures && (
+                <div className="inline-flex items-center space-x-4 bg-purple-50 px-6 py-3 rounded-lg text-sm">
+                  <span><strong>Eye Shape:</strong> {facialFeatures.eyeShape}</span>
+                  <span>•</span>
+                  <span><strong>Distance:</strong> {facialFeatures.eyeDistance}</span>
+                  <span>•</span>
+                  <span><strong>Face:</strong> {facialFeatures.faceShape}</span>
+                  <span>•</span>
+                  <span><strong>Goals:</strong> {clientGoals.lookTypes.length} selected</span>
                 </div>
               )}
             </div>
 
-            {/* Recommendations */}
+            {/* Recommendations Grid */}
             <div className="grid gap-6">
               {recommendations.map((rec, index) => (
                 <div key={rec.map.id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
                   <div className="md:flex">
-                    {/* Map Image */}
+                    {/* Map Preview */}
                     <div className="md:w-1/3">
                       <div className="aspect-video bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
                         {rec.map.image_url ? (
@@ -650,7 +966,7 @@ export default function LashMapsScannerPage() {
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <div className="flex items-center mb-2">
-                            <span className="text-2xl mr-3">#{index + 1}</span>
+                            <span className="text-3xl mr-3">#{index + 1}</span>
                             <h3 className="text-2xl font-bold text-gray-900">{rec.map.name}</h3>
                           </div>
                           <div className="flex items-center space-x-4 mb-3">
@@ -667,28 +983,49 @@ export default function LashMapsScannerPage() {
                           </div>
                         </div>
 
-                        <div className={`text-right ${getConfidenceColor(rec.confidence)}`}>
-                          <div className="text-2xl font-bold">{Math.round(rec.confidence)}%</div>
-                          <div className="text-sm">Match</div>
+                        <div className="text-right">
+                          <div className={`text-3xl font-bold ${
+                            rec.matchScore >= 85 ? 'text-green-600' :
+                            rec.matchScore >= 70 ? 'text-yellow-600' :
+                            'text-gray-600'
+                          }`}>
+                            {Math.round(rec.matchScore)}%
+                          </div>
+                          <div className="text-sm text-gray-600">Match</div>
                         </div>
                       </div>
 
                       <p className="text-gray-600 mb-4">{rec.map.description}</p>
 
-                      <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg p-4 mb-6">
+                      <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg p-4 mb-4">
                         <div className="flex items-start">
                           <Star className="w-5 h-5 text-purple-600 mt-0.5 mr-3 flex-shrink-0" />
-                          <p className="text-purple-800 font-medium">{rec.reason}</p>
+                          <div>
+                            <p className="text-purple-900 font-medium mb-2">
+                              <strong>Why this works:</strong> {rec.reason}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {rec.factors.map((factor, i) => (
+                                <span key={i} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white text-purple-700">
+                                  {factor}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
 
                       <div className="flex space-x-4">
                         <Link 
                           href={`/dashboard/tech/lash-maps/${rec.map.id}`}
-                          className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg transition-all duration-200 text-center"
+                          className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:shadow-lg transition-all text-center"
                         >
-                          View Full Details
+                          View Details
                         </Link>
+                        <button className="px-6 py-3 border-2 border-purple-500 text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-all">
+                          <Save className="w-5 h-5 inline-block mr-2" />
+                          Save
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -701,14 +1038,14 @@ export default function LashMapsScannerPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={resetScanner}
-                  className="bg-gray-100 text-gray-700 px-8 py-3 rounded-full font-semibold hover:bg-gray-200 transition-all duration-200 flex items-center justify-center space-x-2"
+                  className="bg-gray-100 text-gray-700 px-8 py-3 rounded-full font-semibold hover:bg-gray-200 transition-all flex items-center justify-center space-x-2"
                 >
                   <RotateCw className="w-5 h-5" />
                   <span>Scan Another Client</span>
                 </button>
                 <Link
                   href="/dashboard/tech/lash-maps"
-                  className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
                 >
                   Browse All Maps
                 </Link>
