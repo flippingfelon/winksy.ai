@@ -10,6 +10,9 @@ declare global {
   interface Window {
     FaceMesh: any
     Camera: any
+    lastFaceLog?: number
+    lastNoFaceLog?: number
+    lastFeatures?: DetectedFeatures
   }
 }
 
@@ -231,8 +234,16 @@ export default function LashMapsScannerPage() {
 
       // Now set up frame processing with MediaPipe
       console.log('🔄 Setting up continuous frame processing loop...')
+      let frameCount = 0
       const processFrame = async () => {
         if (videoRef.current && faceMeshRef.current && videoRef.current.readyState === 4) {
+          frameCount++
+          if (frameCount === 1) {
+            console.log('📤 Sending first frame to MediaPipe...')
+          }
+          if (frameCount % 60 === 0) {
+            console.log(`📊 Processed ${frameCount} frames`)
+          }
           await faceMeshRef.current.send({ image: videoRef.current })
         }
         requestAnimationFrame(processFrame)
@@ -290,14 +301,35 @@ export default function LashMapsScannerPage() {
     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
       const landmarks = results.multiFaceLandmarks[0]
       
+      // Log detection (only once per second to avoid spam)
+      const now = Date.now()
+      if (!window.lastFaceLog || now - window.lastFaceLog > 1000) {
+        console.log('👤 Face detected! Landmarks:', landmarks.length, 'points')
+        window.lastFaceLog = now
+      }
+      
       // Draw visual grid overlay
       drawFacialGrid(ctx, landmarks, canvas.width, canvas.height)
       
       // Detect features
       const features = analyzeFeatures(landmarks, canvas.width, canvas.height)
+      
+      // Log features (only when they change)
+      if (!window.lastFeatures || JSON.stringify(window.lastFeatures) !== JSON.stringify(features)) {
+        console.log('🎯 Features detected:', features)
+        window.lastFeatures = features
+      }
+      
       setDetectedFeatures(features)
       setFaceDetected(true)
     } else {
+      // Log when no face detected (throttled)
+      const now = Date.now()
+      if (!window.lastNoFaceLog || now - window.lastNoFaceLog > 2000) {
+        console.log('❌ No face detected in frame')
+        window.lastNoFaceLog = now
+      }
+      
       setFaceDetected(false)
       setDetectedFeatures(null)
     }
