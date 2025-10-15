@@ -1072,61 +1072,11 @@ export default function LashMapsScannerPage() {
                 }}
               />
 
-              {/* Canvas Overlay - hidden, only used for detection */}
+              {/* Canvas Overlay - Dynamic face mesh with eye points and facial features */}
               <canvas
                 ref={canvasRef}
-                className="absolute inset-0 w-full h-full pointer-events-none hidden"
+                className="absolute inset-0 w-full h-full pointer-events-none"
               />
-
-              {/* Static Face Guide - Fixed position */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="relative" style={{ width: '280px', height: '380px' }}>
-                  {/* Face Oval Guide */}
-                  <svg className="w-full h-full" viewBox="0 0 280 380">
-                    {/* Main face oval */}
-                    <ellipse
-                      cx="140"
-                      cy="190"
-                      rx="120"
-                      ry="160"
-                      fill="none"
-                      stroke="rgba(236, 72, 153, 0.7)"
-                      strokeWidth="3"
-                      strokeDasharray="10,5"
-                    />
-                    
-                    {/* Eye guides */}
-                    <ellipse
-                      cx="90"
-                      cy="160"
-                      rx="25"
-                      ry="15"
-                      fill="none"
-                      stroke="rgba(236, 72, 153, 0.5)"
-                      strokeWidth="2"
-                    />
-                    <ellipse
-                      cx="190"
-                      cy="160"
-                      rx="25"
-                      ry="15"
-                      fill="none"
-                      stroke="rgba(236, 72, 153, 0.5)"
-                      strokeWidth="2"
-                    />
-                    
-                    {/* Center alignment markers */}
-                    <line x1="140" y1="0" x2="140" y2="30" stroke="rgba(236, 72, 153, 0.3)" strokeWidth="2" />
-                    <line x1="140" y1="350" x2="140" y2="380" stroke="rgba(236, 72, 153, 0.3)" strokeWidth="2" />
-                  </svg>
-                  
-                  {/* Corner guides */}
-                  <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-pink-400"></div>
-                  <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-pink-400"></div>
-                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-pink-400"></div>
-                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-pink-400"></div>
-                </div>
-              </div>
 
               {/* Status Indicator */}
               <div className="absolute top-4 right-4">
@@ -1147,7 +1097,7 @@ export default function LashMapsScannerPage() {
                 <div className="absolute bottom-4 left-4 right-4 bg-purple-600/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-lg">
                   <p className="text-white font-semibold text-sm flex items-center justify-center gap-2">
                     <Target className="w-4 h-4" />
-                    Align your face with the pink guide • Keep still
+                    Position face in center • Watch the pink mesh track your features
                   </p>
                   <button
                     onClick={() => {
