@@ -17,7 +17,7 @@ interface ZoneData {
 
 interface LashMapJSON {
   name: string
-  category: 'Natural' | 'Volume' | 'Mega Volume' | 'Special/Celebrity Styles'
+  category: 'Natural' | 'Volume' | 'Mega Volume' | 'Special/Celebrity Styles' | 'Classic' | string
   difficulty: 'Beginner' | 'Intermediate' | 'Pro'
   description: string
   zones: ZoneData[]
@@ -61,8 +61,10 @@ export async function POST(request: NextRequest) {
         }
 
         // Normalize category to match database enum
-        let category = mapData.category
-        if (category === 'Classic') category = 'Natural'
+        let category: string = mapData.category
+        if (category === 'Classic') {
+          category = 'Natural'
+        }
         if (!['Natural', 'Volume', 'Mega Volume', 'Special/Celebrity Styles'].includes(category)) {
           category = 'Natural' // Default fallback
         }
