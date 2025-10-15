@@ -91,8 +91,10 @@ export default function LashMapsScannerPage() {
     loadMediaPipe()
     
     return () => {
-      if (cameraRef.current) {
-        cameraRef.current.stop()
+      // Stop video stream when component unmounts
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream
+        stream.getTracks().forEach(track => track.stop())
       }
     }
   }, [])
@@ -174,34 +176,67 @@ export default function LashMapsScannerPage() {
         return
       }
 
-      console.log('🎥 Starting camera...')
+      console.log('🎥 Requesting camera access...')
       
-      // Use MediaPipe Camera utility to manage the video stream
-      const camera = new window.Camera(videoRef.current, {
-        onFrame: async () => {
-          if (videoRef.current && faceMeshRef.current) {
-            await faceMeshRef.current.send({ image: videoRef.current })
-          }
+      // Request camera access directly using getUserMedia
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
         },
-        facingMode: 'user', // Front-facing camera for computer webcam
-        width: 1280,
-        height: 720
+        audio: false
       })
 
-      console.log('📷 Camera configured, starting stream...')
-      await camera.start()
+      console.log('✅ Camera permission granted!')
+      console.log('📹 Stream obtained:', stream)
       
-      cameraRef.current = camera
+      // Set the stream to the video element
+      videoRef.current.srcObject = stream
+      
+      // Wait for video to be ready
+      await new Promise<void>((resolve) => {
+        if (videoRef.current) {
+          videoRef.current.onloadedmetadata = () => {
+            console.log('📺 Video metadata loaded')
+            resolve()
+          }
+        }
+      })
+
+      // Now set up frame processing with MediaPipe
+      console.log('🔄 Setting up frame processing...')
+      const processFrame = async () => {
+        if (videoRef.current && faceMeshRef.current && videoRef.current.readyState === 4) {
+          await faceMeshRef.current.send({ image: videoRef.current })
+        }
+        requestAnimationFrame(processFrame)
+      }
+      
+      processFrame()
+      
       setHasPermission(true)
-      console.log('✅ Front-facing camera started successfully!')
-      console.log('📺 Video element:', videoRef.current)
-      console.log('📹 Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight)
+      console.log('✅ Camera and face detection ready!')
       
     } catch (error) {
       console.error('❌ Error starting camera:', error)
       console.error('Error details:', error)
       setHasPermission(false)
-      alert(`Camera Error: ${error instanceof Error ? error.message : 'Unable to access camera. Please ensure you have granted camera permissions.'}`)
+      
+      let errorMessage = 'Unable to access camera.'
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage = 'Camera permission denied. Please allow camera access and refresh the page.'
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = 'No camera found on this device.'
+        } else if (error.name === 'NotReadableError') {
+          errorMessage = 'Camera is in use by another application.'
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      alert(`Camera Error: ${errorMessage}`)
     }
   }
 
