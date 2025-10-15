@@ -46,6 +46,7 @@ export default function LashMapsScannerPage() {
   const animationRef = useRef<number | null>(null)
   
   const [hasPermission, setHasPermission] = useState<boolean | null>(null)
+  const [cameraError, setCameraError] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [showGoalsForm, setShowGoalsForm] = useState(false)
@@ -56,6 +57,9 @@ export default function LashMapsScannerPage() {
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user')
   const [facialFeatures, setFacialFeatures] = useState<FacialFeatures | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [detectionStatus, setDetectionStatus] = useState<'idle' | 'looking' | 'detected' | 'error'>('idle')
+  const [detectionAttempts, setDetectionAttempts] = useState(0)
+  const [lastDetectionTime, setLastDetectionTime] = useState<Date | null>(null)
   const [clientGoals, setClientGoals] = useState<ClientGoals>({
     lookTypes: [],
     intensity: 'moderate',
@@ -123,8 +127,17 @@ export default function LashMapsScannerPage() {
 
   const startCamera = async () => {
     try {
-      console.log('📹 Requesting camera access...')
+      console.log('📹 Step 1: Requesting camera access...')
+      console.log('   - Camera facing:', cameraFacing)
+      console.log('   - Current permission state:', hasPermission)
       stopCamera()
+      setCameraError(null)
+      setDetectionStatus('idle')
+
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not available in this browser')
+      }
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -135,8 +148,13 @@ export default function LashMapsScannerPage() {
         }
       })
 
-      console.log('✅ Camera access granted!')
-      console.log('Camera settings:', mediaStream.getVideoTracks()[0].getSettings())
+      console.log('✅ Step 2: Camera access granted!')
+      const videoTrack = mediaStream.getVideoTracks()[0]
+      const settings = videoTrack.getSettings()
+      console.log('   - Video track label:', videoTrack.label)
+      console.log('   - Resolution:', settings.width, 'x', settings.height)
+      console.log('   - Frame rate:', settings.frameRate, 'fps')
+      console.log('   - Facing mode:', settings.facingMode)
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
@@ -145,15 +163,48 @@ export default function LashMapsScannerPage() {
         
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
-            console.log('▶️ Video playing, starting face detection...')
+            console.log('📺 Step 3: Video metadata loaded')
+            console.log('   - Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight)
+            console.log('   - Video ready state:', videoRef.current.readyState)
+            console.log('▶️ Step 4: Playing video and starting face detection...')
             videoRef.current.play()
+            setDetectionStatus('looking')
             detectFacesRealtime()
           }
         }
+        
+        videoRef.current.onerror = (e) => {
+          console.error('❌ Video element error:', e)
+          setCameraError('Video playback error')
+        }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ Error accessing camera:', error)
       setHasPermission(false)
+      setDetectionStatus('error')
+      
+      // Provide specific error messages
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          setCameraError('Camera permission denied. Please allow camera access in your browser settings.')
+          console.error('   ⚠️ User denied camera permission')
+        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+          setCameraError('No camera found. Please connect a camera and try again.')
+          console.error('   ⚠️ No camera device found')
+        } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+          setCameraError('Camera is already in use by another application.')
+          console.error('   ⚠️ Camera is in use')
+        } else if (error.name === 'OverconstrainedError') {
+          setCameraError('Camera does not meet the required specifications.')
+          console.error('   ⚠️ Camera constraints not met')
+        } else {
+          setCameraError(`Camera error: ${error.message}`)
+          console.error('   ⚠️ Unknown error:', error.message)
+        }
+      } else {
+        setCameraError('Unknown camera error occurred')
+        console.error('   ⚠️ Non-Error object thrown:', error)
+      }
     }
   }
 
@@ -161,9 +212,84 @@ export default function LashMapsScannerPage() {
     setCameraFacing(prev => prev === 'user' ? 'environment' : 'user')
   }
 
+  const capturePhoto = async () => {
+    console.log('📸 Capture Photo initiated')
+    
+    if (!videoRef.current || !canvasRef.current || !detector) {
+      console.error('❌ Cannot capture - missing video, canvas, or detector')
+      alert('Unable to capture photo. Please ensure camera is active.')
+      return
+    }
+
+    try {
+      const video = videoRef.current
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')
+      
+      if (!ctx) {
+        console.error('❌ Cannot get canvas context')
+        return
+      }
+
+      console.log('🎬 Freezing video frame...')
+      // Stop real-time detection temporarily
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+
+      // Capture the current frame
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      ctx.drawImage(video, 0, 0)
+
+      console.log('🔍 Running face detection on captured frame...')
+      setDetectionStatus('looking')
+
+      // Run face detection on the captured frame
+      const faces = await detector.estimateFaces(video, {
+        flipHorizontal: false,
+        staticImageMode: true // Use static mode for single image
+      })
+
+      if (faces.length > 0) {
+        console.log('✅ Face detected in captured photo!')
+        console.log('   - Keypoints:', faces[0].keypoints.length)
+        const face = faces[0]
+        
+        // Draw landmarks on the captured image
+        drawFaceLandmarks(ctx, face)
+        
+        // Analyze features
+        const features = analyzeFacialFeatures(face)
+        console.log('📊 Features from captured photo:', features)
+        
+        setFacialFeatures(features)
+        setFaceDetected(true)
+        setDetectionStatus('detected')
+        
+        alert('Face detected successfully! Proceed to set your goals.')
+      } else {
+        console.log('⚠️ No face detected in captured photo')
+        setDetectionStatus('looking')
+        alert('No face detected in the photo. Please adjust your position and try again.')
+        
+        // Resume real-time detection
+        detectFacesRealtime()
+      }
+    } catch (error) {
+      console.error('❌ Error capturing photo:', error)
+      setDetectionStatus('error')
+      alert('Error analyzing photo. Please try again.')
+      
+      // Resume real-time detection
+      detectFacesRealtime()
+    }
+  }
+
   const detectFacesRealtime = async () => {
+    // Check prerequisites
     if (!detector || !videoRef.current || !canvasRef.current) {
-      console.log('Detection skipped - missing:', {
+      console.log('⏸️ Detection skipped - missing components:', {
         detector: !!detector,
         video: !!videoRef.current,
         canvas: !!canvasRef.current
@@ -176,6 +302,9 @@ export default function LashMapsScannerPage() {
     const ctx = canvas.getContext('2d')
 
     if (!ctx || video.readyState !== 4) {
+      if (video.readyState !== 4) {
+        console.log('⏸️ Video not ready. Ready state:', video.readyState, '(waiting for 4)')
+      }
       animationRef.current = requestAnimationFrame(detectFacesRealtime)
       return
     }
@@ -184,7 +313,7 @@ export default function LashMapsScannerPage() {
     if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
-      console.log('Canvas resized to:', video.videoWidth, 'x', video.videoHeight)
+      console.log('🖼️ Canvas resized to match video:', video.videoWidth, 'x', video.videoHeight)
     }
     
     ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -206,15 +335,30 @@ export default function LashMapsScannerPage() {
     }
 
     try {
+      const detectionStartTime = performance.now()
+      setDetectionStatus('looking')
+      setDetectionAttempts(prev => prev + 1)
+
       const faces = await detector.estimateFaces(video, {
         flipHorizontal: false, // Don't flip for better detection
         staticImageMode: false
       })
 
+      const detectionEndTime = performance.now()
+      const detectionTime = (detectionEndTime - detectionStartTime).toFixed(2)
+
       if (faces.length === 0) {
-        console.log('⚠️ No faces detected. Video dimensions:', video.videoWidth, 'x', video.videoHeight)
+        console.log(`🔍 Detection attempt #${detectionAttempts + 1} (${detectionTime}ms): No faces found`)
+        console.log('   - Video dimensions:', video.videoWidth, 'x', video.videoHeight)
+        console.log('   - Video playing:', !video.paused)
+        console.log('   - Canvas size:', canvas.width, 'x', canvas.height)
+        setDetectionStatus('looking')
       } else {
-        console.log(`✅ Detected ${faces.length} face(s)!`)
+        console.log(`✅ Detection attempt #${detectionAttempts + 1} (${detectionTime}ms): Found ${faces.length} face(s)!`)
+        console.log('   - Keypoints detected:', faces[0].keypoints.length)
+        console.log('   - Face box:', faces[0].box)
+        setDetectionStatus('detected')
+        setLastDetectionTime(new Date())
       }
 
       if (faces.length > 0) {
@@ -224,6 +368,7 @@ export default function LashMapsScannerPage() {
         
         if (!isAnalyzing && !showGoalsForm && !showResults) {
           const features = analyzeFacialFeatures(face)
+          console.log('📊 Facial features analyzed:', features)
           setFacialFeatures(features)
         }
       } else {
@@ -231,7 +376,13 @@ export default function LashMapsScannerPage() {
         setFacialFeatures(null)
       }
     } catch (error) {
-      console.error('Error detecting face:', error)
+      console.error('❌ Error during face detection:', error)
+      if (error instanceof Error) {
+        console.error('   - Error name:', error.name)
+        console.error('   - Error message:', error.message)
+        console.error('   - Stack trace:', error.stack)
+      }
+      setDetectionStatus('error')
     }
 
     animationRef.current = requestAnimationFrame(detectFacesRealtime)
@@ -750,15 +901,34 @@ export default function LashMapsScannerPage() {
         <div className="bg-white rounded-2xl shadow-lg p-8 text-center max-w-md">
           <Camera className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Camera Access Required</h2>
+          
+          {cameraError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 text-sm font-semibold mb-2">Error Details:</p>
+              <p className="text-red-600 text-sm">{cameraError}</p>
+            </div>
+          )}
+          
           <p className="text-gray-600 mb-6">
             We need camera access to analyze facial features and recommend perfect lash maps.
           </p>
+          
           <button
             onClick={startCamera}
             className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
           >
-            Allow Camera Access
+            Try Again
           </button>
+          
+          <div className="mt-6 text-left text-sm text-gray-500">
+            <p className="font-semibold mb-2">Troubleshooting:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Check browser permissions for camera access</li>
+              <li>Make sure no other app is using the camera</li>
+              <li>Try refreshing the page</li>
+              <li>Try a different browser (Chrome, Firefox, Safari)</li>
+            </ul>
+          </div>
         </div>
       </div>
     )
@@ -806,16 +976,35 @@ export default function LashMapsScannerPage() {
               />
 
               {/* Face Detection Status */}
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 space-y-2">
+                {/* Main Detection Status */}
                 <div className={`flex items-center space-x-2 px-4 py-2 rounded-full backdrop-blur-sm ${
-                  faceDetected 
+                  detectionStatus === 'detected' 
                     ? 'bg-green-500/90 text-white' 
-                    : 'bg-red-500/90 text-white'
+                    : detectionStatus === 'looking'
+                    ? 'bg-yellow-500/90 text-white'
+                    : detectionStatus === 'error'
+                    ? 'bg-red-500/90 text-white'
+                    : 'bg-gray-500/90 text-white'
                 }`}>
-                  <div className={`w-2 h-2 rounded-full ${faceDetected ? 'bg-white' : 'bg-white'} animate-pulse`}></div>
+                  <div className={`w-2 h-2 rounded-full bg-white ${detectionStatus === 'looking' ? 'animate-pulse' : ''}`}></div>
                   <span className="text-sm font-semibold">
-                    {faceDetected ? 'Face Detected' : 'No Face Detected'}
+                    {detectionStatus === 'detected' ? '✓ Face Detected!' : 
+                     detectionStatus === 'looking' ? '👀 Looking for face...' :
+                     detectionStatus === 'error' ? '⚠ Detection Error' :
+                     '⏸ Initializing...'}
                   </span>
+                </div>
+                
+                {/* Debug Info */}
+                <div className="bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-xs font-mono">
+                  <div className="space-y-1">
+                    <div>Attempts: {detectionAttempts}</div>
+                    <div>Status: {detectionStatus}</div>
+                    {lastDetectionTime && (
+                      <div>Last: {lastDetectionTime.toLocaleTimeString()}</div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -854,13 +1043,24 @@ export default function LashMapsScannerPage() {
                 </div>
               )}
 
-              {/* Camera Switch */}
-              <button
-                onClick={switchCamera}
-                className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-all"
-              >
-                <SwitchCamera className="w-6 h-6 text-gray-900" />
-              </button>
+              {/* Camera Controls */}
+              <div className="absolute top-4 left-4 flex flex-col space-y-2">
+                <button
+                  onClick={switchCamera}
+                  className="bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-all"
+                  title="Switch Camera"
+                >
+                  <SwitchCamera className="w-6 h-6 text-gray-900" />
+                </button>
+                
+                <button
+                  onClick={capturePhoto}
+                  className="bg-purple-600/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-purple-700 transition-all"
+                  title="Capture Photo for Analysis"
+                >
+                  <Camera className="w-6 h-6 text-white" />
+                </button>
+              </div>
 
 
               {/* Real-time Features Display */}
