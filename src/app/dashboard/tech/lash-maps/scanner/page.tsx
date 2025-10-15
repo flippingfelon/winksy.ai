@@ -169,41 +169,39 @@ export default function LashMapsScannerPage() {
 
   const startCamera = async () => {
     try {
-      if (!videoRef.current || !faceMeshRef.current) return
+      if (!videoRef.current || !faceMeshRef.current) {
+        console.log('❌ Video ref or faceMesh not ready')
+        return
+      }
 
-      console.log('Starting camera...')
+      console.log('🎥 Starting camera...')
       
-      // Request front-facing camera (user-facing) for computer webcam
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'user', // Front-facing camera
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      })
-      
-      videoRef.current.srcObject = stream
-      
-      // Now use MediaPipe Camera for frame processing
+      // Use MediaPipe Camera utility to manage the video stream
       const camera = new window.Camera(videoRef.current, {
         onFrame: async () => {
           if (videoRef.current && faceMeshRef.current) {
             await faceMeshRef.current.send({ image: videoRef.current })
           }
         },
+        facingMode: 'user', // Front-facing camera for computer webcam
         width: 1280,
         height: 720
       })
 
+      console.log('📷 Camera configured, starting stream...')
       await camera.start()
+      
       cameraRef.current = camera
       setHasPermission(true)
-      console.log('✅ Front-facing camera started successfully')
+      console.log('✅ Front-facing camera started successfully!')
+      console.log('📺 Video element:', videoRef.current)
+      console.log('📹 Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight)
       
     } catch (error) {
       console.error('❌ Error starting camera:', error)
+      console.error('Error details:', error)
       setHasPermission(false)
+      alert(`Camera Error: ${error instanceof Error ? error.message : 'Unable to access camera. Please ensure you have granted camera permissions.'}`)
     }
   }
 
@@ -790,6 +788,17 @@ export default function LashMapsScannerPage() {
             </div>
             
             <div className="relative aspect-video bg-gray-900">
+              {/* Loading overlay when camera is starting */}
+              {hasPermission === null && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-900/95 z-10">
+                  <div className="text-center">
+                    <div className="animate-spin w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-white text-lg font-semibold">Starting Camera...</p>
+                    <p className="text-gray-300 text-sm mt-2">Please allow camera access when prompted</p>
+                  </div>
+                </div>
+              )}
+
               {/* Video Feed */}
               <video
                 ref={videoRef}
@@ -798,6 +807,13 @@ export default function LashMapsScannerPage() {
                 muted
                 className="w-full h-full object-cover"
                 style={{ transform: 'scaleX(-1)' }}
+                onLoadedMetadata={() => {
+                  console.log('📹 Video metadata loaded!')
+                  console.log('Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)
+                }}
+                onPlay={() => {
+                  console.log('▶️ Video is playing!')
+                }}
               />
 
               {/* Canvas Overlay */}
@@ -822,22 +838,33 @@ export default function LashMapsScannerPage() {
               </div>
 
               {/* Instructions - Compact version */}
-              {!faceDetected && (
+              {!faceDetected && hasPermission === true && (
                 <div className="absolute bottom-4 left-4 right-4 bg-purple-600/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-lg">
                   <p className="text-white font-semibold text-sm flex items-center justify-center gap-2">
                     <Target className="w-4 h-4" />
-                    Position your face in the center for best results
+                    Position your face in the center • Ensure good lighting
                   </p>
+                  <button
+                    onClick={() => {
+                      console.log('Manual camera restart requested')
+                      startCamera()
+                    }}
+                    className="mt-2 text-xs text-white/80 hover:text-white underline"
+                  >
+                    Camera not working? Click to restart
+                  </button>
                 </div>
               )}
               
               {/* Camera Active Indicator */}
-              <div className="absolute top-4 left-4">
-                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-red-500/90 backdrop-blur-sm">
-                  <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
-                  <span className="text-white text-xs font-semibold">REC</span>
+              {hasPermission === true && (
+                <div className="absolute top-4 left-4">
+                  <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-red-500/90 backdrop-blur-sm">
+                    <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                    <span className="text-white text-xs font-semibold">REC</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Detected Features Display */}
