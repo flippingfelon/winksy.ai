@@ -97,7 +97,6 @@ export default function LashMapsScannerPage() {
       const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh
       const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshTfjsModelConfig = {
         runtime: 'tfjs',
-        refineLandmarks: true, // Enable for full face and eye detection
         maxFaces: 1,
       }
       console.log('⏳ Creating detector with config:', detectorConfig)
@@ -209,10 +208,7 @@ export default function LashMapsScannerPage() {
     try {
       const faces = await detector.estimateFaces(video, {
         flipHorizontal: false, // Don't flip for better detection
-        staticImageMode: false,
-        refineLandmarks: true, // Enable full face and eye landmark detection
-        minDetectionConfidence: 0.5, // Lower threshold for better detection
-        minTrackingConfidence: 0.5
+        staticImageMode: false
       })
 
       if (faces.length === 0) {
