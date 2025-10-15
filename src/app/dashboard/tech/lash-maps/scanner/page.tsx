@@ -57,6 +57,7 @@ interface ClientPreferences {
 export const dynamic = 'force-dynamic'
 
 export default function LashMapsScannerPage() {
+  const [isClient, setIsClient] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const cameraRef = useRef<any>(null)
@@ -77,6 +78,11 @@ export default function LashMapsScannerPage() {
   })
   
   const supabase = createClient()
+  
+  // Only run on client side
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const lookOptions = [
     { id: 'natural', label: 'Natural & Subtle', icon: '🌿' },
@@ -807,6 +813,18 @@ export default function LashMapsScannerPage() {
     if (confidence >= 0.8) return 'High'
     if (confidence >= 0.6) return 'Medium'
     return 'Low'
+  }
+
+  // Wait for client-side hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg p-8 text-center max-w-md">
+          <div className="animate-spin w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Initializing...</h2>
+        </div>
+      </div>
+    )
   }
 
   if (isLoading) {
