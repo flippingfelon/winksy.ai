@@ -3,23 +3,31 @@ import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import { get24HourReminderMessage } from '@/utils/smsTemplates'
 
-// Initialize Supabase with service role key
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-// Initialize Twilio
-const accountSid = process.env.TWILIO_ACCOUNT_SID
-const authToken = process.env.TWILIO_AUTH_TOKEN
-const twilioPhone = process.env.TWILIO_PHONE_NUMBER
-
 export async function GET(request: NextRequest) {
   try {
+    // Initialize Supabase with service role key
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Supabase configuration missing' },
+        { status: 500 }
+      )
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
     // Verify API key for security (optional but recommended)
     const apiKey = request.headers.get('x-api-key')
     if (process.env.CRON_SECRET && apiKey !== process.env.CRON_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Initialize Twilio
+    const accountSid = process.env.TWILIO_ACCOUNT_SID
+    const authToken = process.env.TWILIO_AUTH_TOKEN
+    const twilioPhone = process.env.TWILIO_PHONE_NUMBER
 
     // Check if Twilio is configured
     if (!accountSid || !authToken || !twilioPhone) {
