@@ -295,6 +295,13 @@ export default function LashMapsScannerPage() {
       canvas.height = videoRef.current.videoHeight
     }
 
+    // Save context state
+    ctx.save()
+    
+    // Mirror the canvas to match the mirrored video
+    ctx.translate(canvas.width, 0)
+    ctx.scale(-1, 1)
+
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
@@ -333,6 +340,9 @@ export default function LashMapsScannerPage() {
       setFaceDetected(false)
       setDetectedFeatures(null)
     }
+    
+    // Restore context state
+    ctx.restore()
   }
 
   const drawFacialGrid = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
@@ -937,11 +947,10 @@ export default function LashMapsScannerPage() {
                 }}
               />
 
-              {/* Canvas Overlay */}
+              {/* Canvas Overlay - no mirror transform, we'll flip coordinates in drawing */}
               <canvas
                 ref={canvasRef}
                 className="absolute inset-0 w-full h-full pointer-events-none"
-                style={{ transform: 'scaleX(-1)' }}
               />
 
               {/* Status Indicator */}
