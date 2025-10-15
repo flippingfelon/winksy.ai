@@ -1039,7 +1039,7 @@ export default function LashMapsScannerPage() {
               </h2>
             </div>
             
-            <div className="relative bg-gray-900" style={{ minHeight: '800px', maxHeight: '900px', height: '80vh' }}>
+            <div className="relative bg-gray-900" style={{ minHeight: '500px', maxHeight: '600px' }}>
               {/* Loading overlay when camera is starting */}
               {hasPermission === null && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900/95 z-10">
