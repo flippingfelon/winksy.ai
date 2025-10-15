@@ -173,6 +173,19 @@ export default function LashMapsScannerPage() {
 
       console.log('Starting camera...')
       
+      // Request front-facing camera (user-facing) for computer webcam
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user', // Front-facing camera
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      })
+      
+      videoRef.current.srcObject = stream
+      
+      // Now use MediaPipe Camera for frame processing
       const camera = new window.Camera(videoRef.current, {
         onFrame: async () => {
           if (videoRef.current && faceMeshRef.current) {
@@ -186,10 +199,10 @@ export default function LashMapsScannerPage() {
       await camera.start()
       cameraRef.current = camera
       setHasPermission(true)
-      console.log('Camera started successfully')
+      console.log('✅ Front-facing camera started successfully')
       
     } catch (error) {
-      console.error('Error starting camera:', error)
+      console.error('❌ Error starting camera:', error)
       setHasPermission(false)
     }
   }
