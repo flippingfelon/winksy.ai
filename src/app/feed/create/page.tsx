@@ -29,6 +29,8 @@ export default function CreatePostPage() {
   const [postType, setPostType] = useState<'look' | 'tutorial' | 'tip' | 'before-after'>('look')
   const [selectedMapId, setSelectedMapId] = useState<string>('')
   const [isTechOnly, setIsTechOnly] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
@@ -90,21 +92,44 @@ export default function CreatePostPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setError(null)
 
-    if (!user || !imageFile) {
-      alert('Please select an image')
+    console.log('🚀 Starting post creation...')
+    console.log('User:', user?.id)
+    console.log('Image file:', imageFile?.name, imageFile?.size, 'bytes')
+    console.log('Caption:', caption)
+    console.log('Post type:', postType)
+    console.log('Selected map:', selectedMapId)
+    console.log('Tech only:', isTechOnly)
+
+    if (!user) {
+      const errorMsg = 'You must be logged in to create a post'
+      console.error('❌', errorMsg)
+      setError(errorMsg)
+      return
+    }
+
+    if (!imageFile) {
+      const errorMsg = 'Please select an image to upload'
+      console.error('❌', errorMsg)
+      setError(errorMsg)
       return
     }
 
     setLoading(true)
+    setUploadProgress(10)
 
     try {
       // Upload image to Supabase Storage
+      console.log('📤 Uploading image to Supabase Storage...')
       const fileExt = imageFile.name.split('.').pop()
       const fileName = `${user.id}-${Date.now()}.${fileExt}`
       const filePath = `posts/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
+      console.log('File path:', filePath)
+      setUploadProgress(30)
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('feed-images')
         .upload(filePath, imageFile, {
           cacheControl: '3600',
@@ -112,57 +137,101 @@ export default function CreatePostPage() {
         })
 
       if (uploadError) {
+        console.error('❌ Upload error:', uploadError)
+        
         // If bucket doesn't exist, show helpful error
-        if (uploadError.message.includes('not found')) {
-          alert('Storage bucket not set up yet. Please create a "feed-images" bucket in Supabase Storage.')
+        if (uploadError.message.includes('not found') || uploadError.message.includes('Bucket')) {
+          const errorMsg = '⚠️ Storage bucket "feed-images" doesn\'t exist yet!\n\nPlease create it in Supabase:\n1. Go to Storage in Supabase Dashboard\n2. Click "New Bucket"\n3. Name: feed-images\n4. Public bucket: Yes\n5. Click "Create bucket"'
+          console.error(errorMsg)
+          setError('Storage bucket not set up. Check console for instructions.')
           setLoading(false)
           return
         }
-        throw uploadError
+        
+        throw new Error(`Upload failed: ${uploadError.message}`)
       }
+
+      console.log('✅ Image uploaded successfully:', uploadData)
+      setUploadProgress(60)
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('feed-images')
         .getPublicUrl(filePath)
 
+      console.log('📸 Public URL:', publicUrl)
+      setUploadProgress(70)
+
       // Create post
-      const { error: postError } = await supabase
+      console.log('💾 Creating post in database...')
+      const postData = {
+        user_id: user.id,
+        image_url: publicUrl,
+        caption: caption || null,
+        post_type: postType,
+        lash_map_id: selectedMapId || null,
+        is_tech_only: isTechOnly && profile?.roles.includes('tech')
+      }
+      console.log('Post data:', postData)
+
+      const { data: newPost, error: postError } = await supabase
         .from('posts')
-        .insert({
-          user_id: user.id,
-          image_url: publicUrl,
-          caption,
-          post_type: postType,
-          lash_map_id: selectedMapId || null,
-          is_tech_only: isTechOnly && profile?.roles.includes('tech')
-        })
+        .insert(postData)
+        .select()
+        .single()
 
-      if (postError) throw postError
-
-      // Award points for posting
-      await supabase
-        .from('points')
-        .insert({
-          user_id: user.id,
-          amount: 100,
-          reason: 'Created a post',
-          reference_type: 'post'
-        })
-
-      // Update profile points
-      if (profile) {
-        await supabase
-          .from('profiles')
-          .update({ points: (profile.points || 0) + 100 })
-          .eq('id', user.id)
+      if (postError) {
+        console.error('❌ Post creation error:', postError)
+        
+        if (postError.message.includes('permission denied') || postError.message.includes('RLS')) {
+          throw new Error('Permission denied. Make sure RLS policies allow you to create posts.')
+        }
+        
+        if (postError.message.includes('relation') || postError.message.includes('does not exist')) {
+          throw new Error('Posts table not found. Please run the feed database migration.')
+        }
+        
+        throw new Error(`Failed to create post: ${postError.message}`)
       }
 
+      console.log('✅ Post created successfully:', newPost)
+      setUploadProgress(85)
+
+      // Award points for posting
+      console.log('🎁 Awarding points...')
+      try {
+        await supabase
+          .from('points')
+          .insert({
+            user_id: user.id,
+            amount: 100,
+            reason: 'Created a post',
+            reference_type: 'post'
+          })
+
+        // Update profile points
+        if (profile) {
+          await supabase
+            .from('profiles')
+            .update({ points: (profile.points || 0) + 100 })
+            .eq('id', user.id)
+        }
+        console.log('✅ Points awarded!')
+      } catch (pointsError) {
+        console.warn('⚠️ Points award failed (non-critical):', pointsError)
+      }
+
+      setUploadProgress(100)
+      console.log('✨ Post creation complete! Redirecting to feed...')
+      
       // Success! Redirect to feed
-      router.push('/feed')
-    } catch (error) {
-      console.error('Error creating post:', error)
-      alert('Failed to create post. Please try again.')
+      setTimeout(() => {
+        router.push('/feed')
+      }, 500)
+    } catch (error: any) {
+      console.error('❌ Error creating post:', error)
+      setError(error.message || 'Failed to create post. Please try again.')
+      setUploadProgress(0)
     } finally {
       setLoading(false)
     }
@@ -194,6 +263,45 @@ export default function CreatePostPage() {
 
         {/* Form Content */}
         <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <X className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-red-800 font-semibold mb-1">Error Creating Post</h3>
+                  <p className="text-red-700 text-sm whitespace-pre-line">{error}</p>
+                  <button
+                    onClick={() => setError(null)}
+                    className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Upload Progress */}
+          {loading && uploadProgress > 0 && (
+            <div className="mb-6 bg-purple-50 border-2 border-purple-200 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-purple-900">
+                  Uploading... {uploadProgress}%
+                </span>
+                <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
+              </div>
+              <div className="w-full bg-purple-200 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-pink-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Image Upload */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
