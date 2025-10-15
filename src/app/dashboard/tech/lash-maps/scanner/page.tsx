@@ -400,7 +400,7 @@ export default function LashMapsScannerPage() {
     ctx.lineWidth = 2
 
     // Vertical offset to align mesh with face (negative = up, positive = down)
-    const yOffset = -80 // Shift mesh up by 80 pixels
+    const yOffset = -40 // Shift mesh up by 40 pixels
 
     // Helper function to draw landmarks with safety check
     const drawLandmark = (index: number, size = 3) => {
