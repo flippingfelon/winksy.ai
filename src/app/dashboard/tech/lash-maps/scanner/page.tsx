@@ -61,16 +61,6 @@ export default function LashMapsScannerPage() {
     intensity: 'moderate',
     specialRequests: ''
   })
-  const [debugInfo, setDebugInfo] = useState({
-    modelLoaded: false,
-    cameraActive: false,
-    videoReady: false,
-    detectionRunning: false,
-    lastDetectionTime: '',
-    faceCount: 0,
-    videoWidth: 0,
-    videoHeight: 0
-  })
   
   const supabase = createClient()
 
@@ -107,14 +97,13 @@ export default function LashMapsScannerPage() {
       const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh
       const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshTfjsModelConfig = {
         runtime: 'tfjs',
-        refineLandmarks: false, // Disable for faster, more lenient detection
+        refineLandmarks: true, // Enable for full face and eye detection
         maxFaces: 1,
       }
       console.log('⏳ Creating detector with config:', detectorConfig)
       const faceDetector = await faceLandmarksDetection.createDetector(model, detectorConfig)
       setDetector(faceDetector)
       setIsModelLoading(false)
-      setDebugInfo(prev => ({ ...prev, modelLoaded: true }))
       console.log('✅ Face detection model loaded successfully!')
     } catch (error) {
       console.error('❌ Error loading face detection model:', error)
@@ -141,14 +130,14 @@ export default function LashMapsScannerPage() {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: cameraFacing,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 },
+          frameRate: { ideal: 30, min: 15 }
         }
       })
 
       console.log('✅ Camera access granted!')
       console.log('Camera settings:', mediaStream.getVideoTracks()[0].getSettings())
-      setDebugInfo(prev => ({ ...prev, cameraActive: true }))
 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
@@ -158,7 +147,6 @@ export default function LashMapsScannerPage() {
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
             console.log('▶️ Video playing, starting face detection...')
-            setDebugInfo(prev => ({ ...prev, videoReady: true }))
             videoRef.current.play()
             detectFacesRealtime()
           }
@@ -198,11 +186,6 @@ export default function LashMapsScannerPage() {
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
       console.log('Canvas resized to:', video.videoWidth, 'x', video.videoHeight)
-      setDebugInfo(prev => ({
-        ...prev,
-        videoWidth: video.videoWidth,
-        videoHeight: video.videoHeight
-      }))
     }
     
     ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -224,15 +207,12 @@ export default function LashMapsScannerPage() {
     }
 
     try {
-      setDebugInfo(prev => ({ 
-        ...prev, 
-        detectionRunning: true,
-        lastDetectionTime: new Date().toLocaleTimeString()
-      }))
-
       const faces = await detector.estimateFaces(video, {
         flipHorizontal: false, // Don't flip for better detection
-        staticImageMode: false
+        staticImageMode: false,
+        refineLandmarks: true, // Enable full face and eye landmark detection
+        minDetectionConfidence: 0.5, // Lower threshold for better detection
+        minTrackingConfidence: 0.5
       })
 
       if (faces.length === 0) {
@@ -240,7 +220,6 @@ export default function LashMapsScannerPage() {
       } else {
         console.log(`✅ Detected ${faces.length} face(s)!`)
       }
-      setDebugInfo(prev => ({ ...prev, faceCount: faces.length }))
 
       if (faces.length > 0) {
         setFaceDetected(true)
@@ -257,7 +236,6 @@ export default function LashMapsScannerPage() {
       }
     } catch (error) {
       console.error('Error detecting face:', error)
-      setDebugInfo(prev => ({ ...prev, detectionRunning: false }))
     }
 
     animationRef.current = requestAnimationFrame(detectFacesRealtime)
@@ -266,16 +244,23 @@ export default function LashMapsScannerPage() {
   const drawFaceLandmarks = (ctx: CanvasRenderingContext2D, face: faceLandmarksDetection.Face) => {
     const keypoints = face.keypoints
 
+    // Set drawing styles
     ctx.strokeStyle = '#E879F9'
-    ctx.lineWidth = 1
+    ctx.lineWidth = 2
     ctx.fillStyle = '#E879F9'
 
-    const leftEyeIndices = [33, 7, 163, 144, 145, 153, 154, 155, 133]
-    const rightEyeIndices = [362, 382, 381, 380, 374, 373, 390, 249, 263]
+    // Enhanced eye landmark indices for more comprehensive detection
+    const leftEyeIndices = [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246]
+    const rightEyeIndices = [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398]
 
-    // Left eye
+    // Face outline indices (for full face detection)
+    const faceOutlineIndices = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109]
+
+    // Draw face outline
+    ctx.strokeStyle = 'rgba(232, 121, 249, 0.8)'
+    ctx.lineWidth = 3
     ctx.beginPath()
-    leftEyeIndices.forEach((index, i) => {
+    faceOutlineIndices.forEach((index, i) => {
       const point = keypoints[index]
       if (i === 0) {
         ctx.moveTo(point.x, point.y)
@@ -286,9 +271,11 @@ export default function LashMapsScannerPage() {
     ctx.closePath()
     ctx.stroke()
 
-    // Right eye
+    // Draw left eye
+    ctx.strokeStyle = '#FF6B6B'
+    ctx.lineWidth = 2
     ctx.beginPath()
-    rightEyeIndices.forEach((index, i) => {
+    leftEyeIndices.slice(0, 9).forEach((index, i) => {
       const point = keypoints[index]
       if (i === 0) {
         ctx.moveTo(point.x, point.y)
@@ -299,8 +286,84 @@ export default function LashMapsScannerPage() {
     ctx.closePath()
     ctx.stroke()
 
-    // Draw key points
-    ;[...leftEyeIndices, ...rightEyeIndices].forEach(index => {
+    // Draw right eye
+    ctx.beginPath()
+    rightEyeIndices.slice(0, 9).forEach((index, i) => {
+      const point = keypoints[index]
+      if (i === 0) {
+        ctx.moveTo(point.x, point.y)
+      } else {
+        ctx.lineTo(point.x, point.y)
+      }
+    })
+    ctx.closePath()
+    ctx.stroke()
+
+    // Draw eyebrows
+    ctx.strokeStyle = '#4ECDC4'
+    const leftEyebrowIndices = [70, 63, 105, 66, 107, 55, 65, 52, 53, 46]
+    const rightEyebrowIndices = [300, 293, 334, 296, 336, 285, 295, 282, 283, 276]
+
+    ctx.beginPath()
+    leftEyebrowIndices.forEach((index, i) => {
+      const point = keypoints[index]
+      if (i === 0) {
+        ctx.moveTo(point.x, point.y)
+      } else {
+        ctx.lineTo(point.x, point.y)
+      }
+    })
+    ctx.stroke()
+
+    ctx.beginPath()
+    rightEyebrowIndices.forEach((index, i) => {
+      const point = keypoints[index]
+      if (i === 0) {
+        ctx.moveTo(point.x, point.y)
+      } else {
+        ctx.lineTo(point.x, point.y)
+      }
+    })
+    ctx.stroke()
+
+    // Draw nose
+    ctx.strokeStyle = '#45B7D1'
+    const noseIndices = [1, 2, 98, 327, 168, 197, 195, 5, 4, 75, 97, 2, 326, 327, 168, 197, 195, 5, 4, 75, 97]
+    ctx.beginPath()
+    noseIndices.forEach((index, i) => {
+      const point = keypoints[index]
+      if (i === 0) {
+        ctx.moveTo(point.x, point.y)
+      } else {
+        ctx.lineTo(point.x, point.y)
+      }
+    })
+    ctx.stroke()
+
+    // Draw mouth
+    ctx.strokeStyle = '#F9CA24'
+    const mouthIndices = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95]
+    ctx.beginPath()
+    mouthIndices.forEach((index, i) => {
+      const point = keypoints[index]
+      if (i === 0) {
+        ctx.moveTo(point.x, point.y)
+      } else {
+        ctx.lineTo(point.x, point.y)
+      }
+    })
+    ctx.closePath()
+    ctx.stroke()
+
+    // Draw key facial points
+    ctx.fillStyle = '#E879F9'
+    const keyPoints = [
+      ...leftEyeIndices.slice(0, 8),
+      ...rightEyeIndices.slice(0, 8),
+      ...faceOutlineIndices.filter((_, i) => i % 3 === 0) // Every 3rd point for outline
+    ]
+
+    keyPoints.forEach(index => {
       const point = keypoints[index]
       ctx.beginPath()
       ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI)
@@ -761,7 +824,7 @@ export default function LashMapsScannerPage() {
               </div>
 
               {/* Help Tips */}
-              {!faceDetected && !isModelLoading && debugInfo.detectionRunning && (
+              {!faceDetected && !isModelLoading && detector && (
                 <div className="absolute inset-x-4 top-20 bg-purple-600/95 backdrop-blur-sm rounded-lg p-4 text-center">
                   <p className="text-white font-semibold mb-2">👤 Position Your Face in the Purple Oval</p>
                   <div className="text-sm text-white/90 space-y-1">
@@ -803,52 +866,6 @@ export default function LashMapsScannerPage() {
                 <SwitchCamera className="w-6 h-6 text-gray-900" />
               </button>
 
-              {/* Debug Panel - only show if no face detected */}
-              {!facialFeatures && (
-                <div className="absolute bottom-4 left-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 text-white text-xs font-mono max-w-xs">
-                  <div className="font-bold mb-2 text-purple-300">🔍 Debug Info</div>
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span>Model Loaded:</span>
-                      <span className={debugInfo.modelLoaded ? 'text-green-400' : 'text-red-400'}>
-                        {debugInfo.modelLoaded ? '✓ Yes' : '✗ No'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Camera Active:</span>
-                      <span className={debugInfo.cameraActive ? 'text-green-400' : 'text-red-400'}>
-                        {debugInfo.cameraActive ? '✓ Yes' : '✗ No'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Video Ready:</span>
-                      <span className={debugInfo.videoReady ? 'text-green-400' : 'text-red-400'}>
-                        {debugInfo.videoReady ? '✓ Yes' : '✗ No'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Detection Running:</span>
-                      <span className={debugInfo.detectionRunning ? 'text-green-400' : 'text-red-400'}>
-                        {debugInfo.detectionRunning ? '✓ Yes' : '✗ No'}
-                      </span>
-                    </div>
-                  <div className="flex items-center justify-between">
-                    <span>Faces Found:</span>
-                    <span className={debugInfo.faceCount > 0 ? 'text-green-400 font-bold' : 'text-yellow-400'}>
-                      {debugInfo.faceCount}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-gray-400">
-                    <span>Video Size:</span>
-                    <span>{debugInfo.videoWidth}x{debugInfo.videoHeight}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-gray-400">
-                    <span>Last Check:</span>
-                    <span>{debugInfo.lastDetectionTime || 'Not started'}</span>
-                  </div>
-                </div>
-              </div>
-              )}
 
               {/* Real-time Features Display */}
               {facialFeatures && !isAnalyzing && (
