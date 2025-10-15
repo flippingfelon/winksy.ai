@@ -97,19 +97,29 @@ export default function LashMapsScannerPage() {
   const loadModel = async () => {
     try {
       console.log('🔄 Starting to load face detection model...')
+      console.log('   ℹ️ Using MediaPipe Face Mesh with TensorFlow.js runtime')
       setIsModelLoading(true)
       const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh
       const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshTfjsModelConfig = {
         runtime: 'tfjs',
         maxFaces: 1,
       }
-      console.log('⏳ Creating detector with config:', detectorConfig)
+      console.log('⏳ Creating detector with config:', JSON.stringify(detectorConfig, null, 2))
       const faceDetector = await faceLandmarksDetection.createDetector(model, detectorConfig)
+      console.log('   ✅ Detector created successfully')
+      console.log('   📊 Detector type:', typeof faceDetector)
+      console.log('   📊 Detector methods:', Object.keys(faceDetector))
       setDetector(faceDetector)
       setIsModelLoading(false)
       console.log('✅ Face detection model loaded successfully!')
+      console.log('   💡 Model is ready to detect faces')
     } catch (error) {
       console.error('❌ Error loading face detection model:', error)
+      if (error instanceof Error) {
+        console.error('   - Error name:', error.name)
+        console.error('   - Error message:', error.message)
+        console.error('   - Error stack:', error.stack)
+      }
       setIsModelLoading(false)
       alert('Failed to load AI model. Please refresh the page.')
     }
@@ -212,12 +222,79 @@ export default function LashMapsScannerPage() {
     setCameraFacing(prev => prev === 'user' ? 'environment' : 'user')
   }
 
+  const testVideoFeed = () => {
+    console.log('🧪 Testing video feed and canvas...')
+    
+    if (!videoRef.current || !canvasRef.current) {
+      console.error('❌ Test failed - missing video or canvas')
+      alert('Video or canvas not available')
+      return
+    }
+
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    
+    if (!ctx) {
+      console.error('❌ Test failed - cannot get canvas context')
+      return
+    }
+
+    console.log('📊 Video feed test results:')
+    console.log('   - Video element exists:', !!video)
+    console.log('   - Video ready state:', video.readyState, '(4 = HAVE_ENOUGH_DATA)')
+    console.log('   - Video dimensions:', video.videoWidth, 'x', video.videoHeight)
+    console.log('   - Video paused:', video.paused)
+    console.log('   - Video ended:', video.ended)
+    console.log('   - Video current time:', video.currentTime)
+    console.log('   - Canvas dimensions:', canvas.width, 'x', canvas.height)
+    
+    // Draw a test pattern on the canvas
+    console.log('🎨 Drawing test pattern...')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    // Draw video frame
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    
+    // Draw a test circle in the center
+    ctx.strokeStyle = 'lime'
+    ctx.lineWidth = 5
+    ctx.beginPath()
+    ctx.arc(canvas.width / 2, canvas.height / 2, 100, 0, 2 * Math.PI)
+    ctx.stroke()
+    
+    // Draw crosshair
+    ctx.strokeStyle = 'red'
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.moveTo(canvas.width / 2 - 50, canvas.height / 2)
+    ctx.lineTo(canvas.width / 2 + 50, canvas.height / 2)
+    ctx.moveTo(canvas.width / 2, canvas.height / 2 - 50)
+    ctx.lineTo(canvas.width / 2, canvas.height / 2 + 50)
+    ctx.stroke()
+    
+    console.log('✅ Test pattern drawn. Check the video feed for a green circle and red crosshair.')
+    console.log('   If you see the pattern, the video feed is working!')
+    
+    // Clear test pattern after 3 seconds
+    setTimeout(() => {
+      console.log('🧹 Clearing test pattern...')
+      detectFacesRealtime()
+    }, 3000)
+  }
+
   const capturePhoto = async () => {
     console.log('📸 Capture Photo initiated')
+    console.log('   - Detector available:', !!detector)
+    console.log('   - Video ref:', !!videoRef.current)
+    console.log('   - Canvas ref:', !!canvasRef.current)
     
     if (!videoRef.current || !canvasRef.current || !detector) {
-      console.error('❌ Cannot capture - missing video, canvas, or detector')
-      alert('Unable to capture photo. Please ensure camera is active.')
+      console.error('❌ Cannot capture - missing components')
+      console.error('   - Video:', !!videoRef.current)
+      console.error('   - Canvas:', !!canvasRef.current)
+      console.error('   - Detector:', !!detector)
+      alert('Unable to capture photo. Please ensure camera is active and model is loaded.')
       return
     }
 
@@ -232,56 +309,91 @@ export default function LashMapsScannerPage() {
       }
 
       console.log('🎬 Freezing video frame...')
+      console.log('   - Video ready state:', video.readyState)
+      console.log('   - Video dimensions:', video.videoWidth, 'x', video.videoHeight)
+      
       // Stop real-time detection temporarily
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
+        console.log('   ⏸️ Paused real-time detection')
       }
 
       // Capture the current frame
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
+      console.log('   📐 Canvas resized to:', canvas.width, 'x', canvas.height)
+      
       ctx.drawImage(video, 0, 0)
+      console.log('   🖼️ Video frame drawn to canvas')
 
       console.log('🔍 Running face detection on captured frame...')
+      console.log('   ⏱️ Starting detection...')
       setDetectionStatus('looking')
+      
+      const startTime = performance.now()
 
       // Run face detection on the captured frame
       const faces = await detector.estimateFaces(video, {
         flipHorizontal: false,
         staticImageMode: true // Use static mode for single image
       })
+      
+      const endTime = performance.now()
+      const detectionTime = (endTime - startTime).toFixed(2)
+      
+      console.log(`   ⏱️ Detection completed in ${detectionTime}ms`)
+      console.log('   📊 Faces found:', faces.length)
 
       if (faces.length > 0) {
         console.log('✅ Face detected in captured photo!')
+        console.log('   - Number of faces:', faces.length)
         console.log('   - Keypoints:', faces[0].keypoints.length)
+        console.log('   - Face box:', JSON.stringify(faces[0].box, null, 2))
+        console.log('   - Face score:', faces[0].score)
+        
         const face = faces[0]
         
         // Draw landmarks on the captured image
+        console.log('   🎨 Drawing face landmarks...')
         drawFaceLandmarks(ctx, face)
         
         // Analyze features
+        console.log('   🧠 Analyzing facial features...')
         const features = analyzeFacialFeatures(face)
-        console.log('📊 Features from captured photo:', features)
+        console.log('   📊 Features from captured photo:', JSON.stringify(features, null, 2))
         
         setFacialFeatures(features)
         setFaceDetected(true)
         setDetectionStatus('detected')
         
-        alert('Face detected successfully! Proceed to set your goals.')
+        alert('✅ Face detected successfully! Proceed to set your goals.')
       } else {
         console.log('⚠️ No face detected in captured photo')
+        console.log('   💡 Suggestions:')
+        console.log('   - Make sure your face is clearly visible')
+        console.log('   - Ensure good lighting')
+        console.log('   - Face the camera directly')
+        console.log('   - Try moving closer or farther')
+        console.log('   - Remove glasses if wearing any')
         setDetectionStatus('looking')
-        alert('No face detected in the photo. Please adjust your position and try again.')
+        alert('❌ No face detected. Please:\n• Ensure good lighting\n• Face the camera directly\n• Move closer or farther\n• Remove glasses if wearing any')
         
         // Resume real-time detection
+        console.log('   ▶️ Resuming real-time detection...')
         detectFacesRealtime()
       }
     } catch (error) {
       console.error('❌ Error capturing photo:', error)
+      if (error instanceof Error) {
+        console.error('   - Error name:', error.name)
+        console.error('   - Error message:', error.message)
+        console.error('   - Error stack:', error.stack)
+      }
       setDetectionStatus('error')
-      alert('Error analyzing photo. Please try again.')
+      alert('⚠️ Error analyzing photo. Check console for details.')
       
       // Resume real-time detection
+      console.log('   ▶️ Resuming real-time detection...')
       detectFacesRealtime()
     }
   }
@@ -1059,6 +1171,14 @@ export default function LashMapsScannerPage() {
                   title="Capture Photo for Analysis"
                 >
                   <Camera className="w-6 h-6 text-white" />
+                </button>
+                
+                <button
+                  onClick={testVideoFeed}
+                  className="bg-green-600/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-green-700 transition-all"
+                  title="Test Video Feed"
+                >
+                  <Target className="w-6 h-6 text-white" />
                 </button>
               </div>
 
