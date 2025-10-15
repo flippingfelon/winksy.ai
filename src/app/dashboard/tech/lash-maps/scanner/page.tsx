@@ -420,7 +420,7 @@ export default function LashMapsScannerPage() {
     }
 
     // Helper function to draw line between landmarks with safety check
-    const drawLine = (indices: number[]) => {
+    const drawLine = (indices: number[], scaleFromCenter: number = 1.0) => {
       try {
         // Safely check if all landmarks exist without throwing
         const validIndices: number[] = []
@@ -439,17 +439,35 @@ export default function LashMapsScannerPage() {
           return
         }
         
-    ctx.beginPath()
+        // Calculate center point if scaling is needed
+        let centerX = 0, centerY = 0
+        if (scaleFromCenter !== 1.0) {
+          validIndices.forEach(index => {
+            centerX += landmarks[index].x * width
+            centerY += (landmarks[index].y * height) + yOffset
+          })
+          centerX /= validIndices.length
+          centerY /= validIndices.length
+        }
+        
+        ctx.beginPath()
         validIndices.forEach((index, i) => {
-          const x = landmarks[index].x * width
-          const y = (landmarks[index].y * height) + yOffset
-      if (i === 0) {
+          let x = landmarks[index].x * width
+          let y = (landmarks[index].y * height) + yOffset
+          
+          // Scale from center if needed
+          if (scaleFromCenter !== 1.0) {
+            x = centerX + (x - centerX) * scaleFromCenter
+            y = centerY + (y - centerY) * scaleFromCenter
+          }
+          
+          if (i === 0) {
             ctx.moveTo(x, y)
-      } else {
+          } else {
             ctx.lineTo(x, y)
-      }
-    })
-    ctx.stroke()
+          }
+        })
+        ctx.stroke()
       } catch (e) {
         // Silently skip this line if any error occurs
       }
@@ -466,13 +484,14 @@ export default function LashMapsScannerPage() {
     ]
     drawLine([...completeFaceOval, completeFaceOval[0]]) // Close the loop
 
-    // Left eye (in hot pink)
+    // Left eye (in hot pink) - scaled 30% bigger
     ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)' // Hot pink
     ctx.lineWidth = 2
+    const eyeScale = 1.3 // Make eyes 30% bigger
     const leftEyeUpper = [246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7]
     const leftEyeLower = [33, 7, 163, 144, 145, 153, 154, 155, 133]
-    drawLine(leftEyeUpper)
-    drawLine([...leftEyeLower, leftEyeLower[0]])
+    drawLine(leftEyeUpper, eyeScale)
+    drawLine([...leftEyeLower, leftEyeLower[0]], eyeScale)
     
     // Left eye key points (wrap entire block in try-catch) - smaller dots
     try {
@@ -483,12 +502,12 @@ export default function LashMapsScannerPage() {
       // Skip left eye points if error
     }
 
-    // Right eye (in hot pink)
+    // Right eye (in hot pink) - scaled 30% bigger
     ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)' // Hot pink
     const rightEyeUpper = [466, 388, 387, 386, 385, 384, 398, 362, 382, 381, 380, 374, 373, 390, 249]
     const rightEyeLower = [263, 249, 390, 373, 374, 380, 381, 382, 362]
-    drawLine(rightEyeUpper)
-    drawLine([...rightEyeLower, rightEyeLower[0]])
+    drawLine(rightEyeUpper, eyeScale)
+    drawLine([...rightEyeLower, rightEyeLower[0]], eyeScale)
     
     // Right eye key points (wrap entire block in try-catch) - smaller dots
     try {
