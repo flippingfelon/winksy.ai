@@ -390,9 +390,9 @@ export default function LashMapsScannerPage() {
   }
 
   const drawFacialGrid = (ctx: CanvasRenderingContext2D, landmarks: any[], width: number, height: number) => {
-    // Set up drawing style
-    ctx.strokeStyle = 'rgba(0, 255, 200, 0.6)'
-    ctx.fillStyle = 'rgba(0, 255, 200, 0.8)'
+    // Set up drawing style - PINK theme!
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.7)' // Hot pink
+    ctx.fillStyle = 'rgba(236, 72, 153, 0.9)' // Hot pink
     ctx.lineWidth = 2
 
     // Helper function to draw landmarks with safety check
@@ -448,16 +448,16 @@ export default function LashMapsScannerPage() {
       }
     }
 
-    // Face oval outline (in cyan)
-    ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)'
+    // Face oval outline (in pink)
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.5)' // Pink
     ctx.lineWidth = 2
     const faceOval = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 
                       397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 
                       172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109]
     drawLine([...faceOval, faceOval[0]])
 
-    // Left eye (in green)
-    ctx.strokeStyle = 'rgba(0, 255, 100, 0.7)'
+    // Left eye (in hot pink)
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)' // Hot pink
     ctx.lineWidth = 2
     const leftEyeUpper = [246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7]
     const leftEyeLower = [33, 7, 163, 144, 145, 153, 154, 155, 133]
@@ -488,19 +488,19 @@ export default function LashMapsScannerPage() {
       // Skip right eye points if error
     }
 
-    // Eyebrows (in cyan)
-    ctx.strokeStyle = 'rgba(100, 255, 255, 0.6)'
+    // Eyebrows (in light pink)
+    ctx.strokeStyle = 'rgba(244, 114, 182, 0.7)' // Light pink
     const leftEyebrow = [70, 63, 105, 66, 107, 55, 65, 52, 53, 46]
     const rightEyebrow = [300, 293, 334, 296, 336, 285, 295, 282, 283, 276]
     drawLine(leftEyebrow)
     drawLine(rightEyebrow)
 
-    // Nose bridge (in light green)
-    ctx.strokeStyle = 'rgba(150, 255, 150, 0.5)'
+    // Nose bridge (in pale pink)
+    ctx.strokeStyle = 'rgba(251, 182, 206, 0.6)' // Pale pink
     drawLine([168, 6, 197, 195, 5])
 
     // Eye spacing indicators (horizontal line between inner corners)
-    ctx.strokeStyle = 'rgba(255, 200, 0, 0.7)'
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)' // Hot pink
     ctx.lineWidth = 2
     ctx.setLineDash([5, 5])
     drawLine([133, 362])
@@ -509,7 +509,7 @@ export default function LashMapsScannerPage() {
     // Add scanning effect (optional - animated lines)
     const time = Date.now() / 1000
     const scanY = ((time % 2) / 2) * height
-    ctx.strokeStyle = 'rgba(0, 255, 200, 0.3)'
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)' // Pink scan line
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(0, scanY)
@@ -1025,10 +1025,10 @@ export default function LashMapsScannerPage() {
           </p>
         </div>
 
-        {/* Main Grid: Camera + Preferences */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Camera View */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        {/* Main Grid: Camera + Preferences - Camera takes more space */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Camera View - Takes 2 columns on large screens */}
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg overflow-hidden">
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-pink-500 to-purple-600">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Target className="w-6 h-6" />
@@ -1036,7 +1036,7 @@ export default function LashMapsScannerPage() {
               </h2>
             </div>
             
-            <div className="relative aspect-video bg-gray-900">
+            <div className="relative bg-gray-900" style={{ minHeight: '600px', aspectRatio: '4/3' }}>
               {/* Loading overlay when camera is starting */}
               {hasPermission === null && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900/95 z-10">
