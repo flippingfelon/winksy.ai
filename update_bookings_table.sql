@@ -90,3 +90,4 @@ WHERE
   AND b.booking_date >= CURRENT_DATE
   AND b.booking_date <= CURRENT_DATE + INTERVAL '2 days';
 
+

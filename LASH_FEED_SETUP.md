@@ -215,3 +215,4 @@ For issues or questions, check the main README or contact support.
 **Built with:** Next.js 15, React 19, Supabase, TailwindCSS
 **Theme:** Pink & Purple gradient (Winksy brand colors)
 
+

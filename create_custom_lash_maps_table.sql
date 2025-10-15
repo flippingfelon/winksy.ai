@@ -60,3 +60,4 @@ ADD COLUMN IF NOT EXISTS custom_lash_map_id UUID REFERENCES public.custom_lash_m
 CREATE INDEX IF NOT EXISTS idx_client_appointments_custom_lash_map_id 
   ON public.client_appointments(custom_lash_map_id);
 
+

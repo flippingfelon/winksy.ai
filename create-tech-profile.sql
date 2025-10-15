@@ -14,3 +14,4 @@ WHERE NOT EXISTS (
 -- Verify it was created:
 SELECT * FROM public.lash_techs WHERE id = auth.uid();
 
+

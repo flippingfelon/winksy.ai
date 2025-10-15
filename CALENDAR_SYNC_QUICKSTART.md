@@ -112,3 +112,4 @@ See **CALENDAR_SYNC_SETUP.md** for detailed instructions!
 
 Connect your calendar once, and Winksy will automatically keep your appointments in sync! 🎉
 
+

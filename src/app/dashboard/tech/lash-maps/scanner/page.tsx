@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Camera, ArrowLeft, CheckCircle, Star, RotateCw, SwitchCamera, Save, Sparkles, Target, Sliders } from 'lucide-react'
+import { Camera, ArrowLeft, CheckCircle, Star, RotateCw, SwitchCamera, Save, Sparkles, Target, Sliders, Loader2 } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection'
 import '@tensorflow/tfjs'
@@ -53,13 +53,23 @@ export default function LashMapsScannerPage() {
   const [detector, setDetector] = useState<faceLandmarksDetection.FaceLandmarksDetector | null>(null)
   const [isModelLoading, setIsModelLoading] = useState(true)
   const [faceDetected, setFaceDetected] = useState(false)
-  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('environment')
+  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user')
   const [facialFeatures, setFacialFeatures] = useState<FacialFeatures | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [clientGoals, setClientGoals] = useState<ClientGoals>({
     lookTypes: [],
     intensity: 'moderate',
     specialRequests: ''
+  })
+  const [debugInfo, setDebugInfo] = useState({
+    modelLoaded: false,
+    cameraActive: false,
+    videoReady: false,
+    detectionRunning: false,
+    lastDetectionTime: '',
+    faceCount: 0,
+    videoWidth: 0,
+    videoHeight: 0
   })
   
   const supabase = createClient()
@@ -92,18 +102,22 @@ export default function LashMapsScannerPage() {
 
   const loadModel = async () => {
     try {
+      console.log('🔄 Starting to load face detection model...')
       setIsModelLoading(true)
       const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh
-      const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig = {
-        runtime: 'mediapipe',
-        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
-        refineLandmarks: true,
+      const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshTfjsModelConfig = {
+        runtime: 'tfjs',
+        refineLandmarks: false, // Disable for faster, more lenient detection
+        maxFaces: 1,
       }
+      console.log('⏳ Creating detector with config:', detectorConfig)
       const faceDetector = await faceLandmarksDetection.createDetector(model, detectorConfig)
       setDetector(faceDetector)
       setIsModelLoading(false)
+      setDebugInfo(prev => ({ ...prev, modelLoaded: true }))
+      console.log('✅ Face detection model loaded successfully!')
     } catch (error) {
-      console.error('Error loading face detection model:', error)
+      console.error('❌ Error loading face detection model:', error)
       setIsModelLoading(false)
       alert('Failed to load AI model. Please refresh the page.')
     }
@@ -121,6 +135,7 @@ export default function LashMapsScannerPage() {
 
   const startCamera = async () => {
     try {
+      console.log('📹 Requesting camera access...')
       stopCamera()
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -131,6 +146,10 @@ export default function LashMapsScannerPage() {
         }
       })
 
+      console.log('✅ Camera access granted!')
+      console.log('Camera settings:', mediaStream.getVideoTracks()[0].getSettings())
+      setDebugInfo(prev => ({ ...prev, cameraActive: true }))
+
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
         setStream(mediaStream)
@@ -138,13 +157,15 @@ export default function LashMapsScannerPage() {
         
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
+            console.log('▶️ Video playing, starting face detection...')
+            setDebugInfo(prev => ({ ...prev, videoReady: true }))
             videoRef.current.play()
             detectFacesRealtime()
           }
         }
       }
     } catch (error) {
-      console.error('Error accessing camera:', error)
+      console.error('❌ Error accessing camera:', error)
       setHasPermission(false)
     }
   }
@@ -154,7 +175,14 @@ export default function LashMapsScannerPage() {
   }
 
   const detectFacesRealtime = async () => {
-    if (!detector || !videoRef.current || !canvasRef.current) return
+    if (!detector || !videoRef.current || !canvasRef.current) {
+      console.log('Detection skipped - missing:', {
+        detector: !!detector,
+        video: !!videoRef.current,
+        canvas: !!canvasRef.current
+      })
+      return
+    }
 
     const video = videoRef.current
     const canvas = canvasRef.current
@@ -165,14 +193,54 @@ export default function LashMapsScannerPage() {
       return
     }
 
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
+    // Set canvas dimensions to match video
+    if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      console.log('Canvas resized to:', video.videoWidth, 'x', video.videoHeight)
+      setDebugInfo(prev => ({
+        ...prev,
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight
+      }))
+    }
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
+    // Draw face guide oval
+    if (!faceDetected) {
+      const centerX = canvas.width / 2
+      const centerY = canvas.height / 2
+      const radiusX = canvas.width * 0.25
+      const radiusY = canvas.height * 0.35
+      
+      ctx.strokeStyle = 'rgba(232, 121, 249, 0.5)'
+      ctx.lineWidth = 3
+      ctx.setLineDash([10, 10])
+      ctx.beginPath()
+      ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI)
+      ctx.stroke()
+      ctx.setLineDash([])
+    }
+
     try {
+      setDebugInfo(prev => ({ 
+        ...prev, 
+        detectionRunning: true,
+        lastDetectionTime: new Date().toLocaleTimeString()
+      }))
+
       const faces = await detector.estimateFaces(video, {
-        flipHorizontal: cameraFacing === 'user'
+        flipHorizontal: false, // Don't flip for better detection
+        staticImageMode: false
       })
+
+      if (faces.length === 0) {
+        console.log('⚠️ No faces detected. Video dimensions:', video.videoWidth, 'x', video.videoHeight)
+      } else {
+        console.log(`✅ Detected ${faces.length} face(s)!`)
+      }
+      setDebugInfo(prev => ({ ...prev, faceCount: faces.length }))
 
       if (faces.length > 0) {
         setFaceDetected(true)
@@ -189,6 +257,7 @@ export default function LashMapsScannerPage() {
       }
     } catch (error) {
       console.error('Error detecting face:', error)
+      setDebugInfo(prev => ({ ...prev, detectionRunning: false }))
     }
 
     animationRef.current = requestAnimationFrame(detectFacesRealtime)
@@ -691,6 +760,41 @@ export default function LashMapsScannerPage() {
                 </div>
               </div>
 
+              {/* Help Tips */}
+              {!faceDetected && !isModelLoading && debugInfo.detectionRunning && (
+                <div className="absolute inset-x-4 top-20 bg-purple-600/95 backdrop-blur-sm rounded-lg p-4 text-center">
+                  <p className="text-white font-semibold mb-2">👤 Position Your Face in the Purple Oval</p>
+                  <div className="text-sm text-white/90 space-y-1">
+                    <p>✓ Look directly at camera</p>
+                    <p>✓ Face the light source</p>
+                    <p>✓ Move closer or farther to fit in oval</p>
+                    <p>✓ Remove glasses if wearing any</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowGoalsForm(true)
+                      if (animationRef.current) {
+                        cancelAnimationFrame(animationRef.current)
+                      }
+                    }}
+                    className="mt-3 bg-white text-purple-600 px-4 py-2 rounded-full text-sm font-semibold hover:bg-purple-50 transition-colors"
+                  >
+                    Skip Face Detection
+                  </button>
+                </div>
+              )}
+
+              {/* Loading Status */}
+              {isModelLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm">
+                  <div className="bg-white rounded-lg p-6 text-center">
+                    <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-3" />
+                    <p className="text-gray-900 font-semibold">Loading AI Model...</p>
+                    <p className="text-sm text-gray-600 mt-1">This may take a few seconds</p>
+                  </div>
+                </div>
+              )}
+
               {/* Camera Switch */}
               <button
                 onClick={switchCamera}
@@ -698,6 +802,53 @@ export default function LashMapsScannerPage() {
               >
                 <SwitchCamera className="w-6 h-6 text-gray-900" />
               </button>
+
+              {/* Debug Panel - only show if no face detected */}
+              {!facialFeatures && (
+                <div className="absolute bottom-4 left-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 text-white text-xs font-mono max-w-xs">
+                  <div className="font-bold mb-2 text-purple-300">🔍 Debug Info</div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span>Model Loaded:</span>
+                      <span className={debugInfo.modelLoaded ? 'text-green-400' : 'text-red-400'}>
+                        {debugInfo.modelLoaded ? '✓ Yes' : '✗ No'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Camera Active:</span>
+                      <span className={debugInfo.cameraActive ? 'text-green-400' : 'text-red-400'}>
+                        {debugInfo.cameraActive ? '✓ Yes' : '✗ No'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Video Ready:</span>
+                      <span className={debugInfo.videoReady ? 'text-green-400' : 'text-red-400'}>
+                        {debugInfo.videoReady ? '✓ Yes' : '✗ No'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Detection Running:</span>
+                      <span className={debugInfo.detectionRunning ? 'text-green-400' : 'text-red-400'}>
+                        {debugInfo.detectionRunning ? '✓ Yes' : '✗ No'}
+                      </span>
+                    </div>
+                  <div className="flex items-center justify-between">
+                    <span>Faces Found:</span>
+                    <span className={debugInfo.faceCount > 0 ? 'text-green-400 font-bold' : 'text-yellow-400'}>
+                      {debugInfo.faceCount}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-gray-400">
+                    <span>Video Size:</span>
+                    <span>{debugInfo.videoWidth}x{debugInfo.videoHeight}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-gray-400">
+                    <span>Last Check:</span>
+                    <span>{debugInfo.lastDetectionTime || 'Not started'}</span>
+                  </div>
+                </div>
+              </div>
+              )}
 
               {/* Real-time Features Display */}
               {facialFeatures && !isAnalyzing && (

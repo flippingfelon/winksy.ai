@@ -230,3 +230,4 @@ The appointments feature will now work perfectly. Go ahead and:
 
 **The fix takes 2 minutes. Let's get your appointments working!** 🚀
 
+

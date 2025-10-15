@@ -153,3 +153,4 @@ CREATE TRIGGER post_comments_updated_at_trigger
 BEFORE UPDATE ON public.post_comments
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+

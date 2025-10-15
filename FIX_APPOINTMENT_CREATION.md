@@ -107,3 +107,4 @@ Check the browser console (F12) for more detailed error messages. Common issues:
 
 **Run the SQL above and you'll be creating appointments in 30 seconds!** 🚀
 
+

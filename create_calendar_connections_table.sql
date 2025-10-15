@@ -97,3 +97,4 @@ COMMENT ON TABLE public.calendar_connections IS 'Stores connections to external 
 COMMENT ON COLUMN public.bookings.import_source IS 'Source of the appointment: manual, google, ical, square, booksy, glossgenius';
 COMMENT ON COLUMN public.bookings.external_event_id IS 'External calendar event ID for syncing';
 
+

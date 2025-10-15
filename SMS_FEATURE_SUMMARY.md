@@ -407,3 +407,4 @@ Your appointment system now has **professional SMS notifications**!
 **Status:** ✅ Complete and Production-Ready
 **Cost:** ~1¢ per text, $15 free credit to start
 
+
