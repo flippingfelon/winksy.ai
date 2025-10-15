@@ -312,7 +312,18 @@ export default function LashMapsScannerPage() {
       const now = Date.now()
       if (!window.lastFaceLog || now - window.lastFaceLog > 1000) {
         console.log('👤 Face detected! Landmarks:', landmarks.length, 'points')
+        console.log('First landmark:', landmarks[0])
+        console.log('Last landmark index:', landmarks.length - 1)
         window.lastFaceLog = now
+      }
+      
+      // Only draw if we have enough landmarks (MediaPipe Face Mesh should have 468)
+      if (landmarks.length < 468) {
+        console.warn('⚠️ Incomplete landmarks detected:', landmarks.length, 'Expected: 468')
+        setFaceDetected(false)
+        setDetectedFeatures(null)
+        ctx.restore()
+        return
       }
       
       // Draw visual grid overlay
@@ -351,8 +362,12 @@ export default function LashMapsScannerPage() {
     ctx.fillStyle = 'rgba(0, 255, 200, 0.8)'
     ctx.lineWidth = 2
 
-    // Helper function to draw landmarks
+    // Helper function to draw landmarks with safety check
     const drawLandmark = (index: number, size = 3) => {
+      if (!landmarks[index]) {
+        console.warn(`⚠️ Missing landmark at index ${index}`)
+        return
+      }
       const x = landmarks[index].x * width
       const y = landmarks[index].y * height
       ctx.beginPath()
@@ -360,8 +375,15 @@ export default function LashMapsScannerPage() {
       ctx.fill()
     }
 
-    // Helper function to draw line between landmarks
+    // Helper function to draw line between landmarks with safety check
     const drawLine = (indices: number[]) => {
+      // Check if all landmarks exist
+      const allExist = indices.every(index => landmarks[index])
+      if (!allExist) {
+        console.warn(`⚠️ Missing landmarks in line:`, indices.filter(i => !landmarks[i]))
+        return
+      }
+      
       ctx.beginPath()
       indices.forEach((index, i) => {
         const x = landmarks[index].x * width
@@ -433,6 +455,27 @@ export default function LashMapsScannerPage() {
   }
 
   const analyzeFeatures = (landmarks: any[], width: number, height: number): DetectedFeatures => {
+    // Verify all required landmarks exist
+    const requiredIndices = [133, 33, 159, 145, 362, 263, 386, 374, 234, 454, 10, 152]
+    const missingIndices = requiredIndices.filter(i => !landmarks[i])
+    
+    if (missingIndices.length > 0) {
+      console.error('❌ Missing required landmarks for analysis:', missingIndices)
+      // Return default features
+      return {
+        eyeShape: 'Unknown',
+        eyeSpacing: 'Unknown',
+        faceShape: 'Unknown',
+        eyeSize: 'Unknown',
+        confidence: {
+          eyeShape: 0,
+          eyeSpacing: 0,
+          faceShape: 0,
+          eyeSize: 0
+        }
+      }
+    }
+    
     // Get key landmark positions
     const leftEyeInner = landmarks[133]
     const leftEyeOuter = landmarks[33]
