@@ -318,28 +318,43 @@ export default function LashMapsScannerPage() {
       }
       
       // Only draw if we have enough landmarks (MediaPipe Face Mesh should have 468)
-      if (landmarks.length < 468) {
-        console.warn('⚠️ Incomplete landmarks detected:', landmarks.length, 'Expected: 468')
+      if (!landmarks || !Array.isArray(landmarks) || landmarks.length < 468) {
+        console.warn('⚠️ Invalid or incomplete landmarks:', {
+          exists: !!landmarks,
+          isArray: Array.isArray(landmarks),
+          length: landmarks?.length || 0,
+          expected: 468
+        })
         setFaceDetected(false)
         setDetectedFeatures(null)
         ctx.restore()
         return
       }
       
-      // Draw visual grid overlay
-      drawFacialGrid(ctx, landmarks, canvas.width, canvas.height)
-      
-      // Detect features
-      const features = analyzeFeatures(landmarks, canvas.width, canvas.height)
-      
-      // Log features (only when they change)
-      if (!window.lastFeatures || JSON.stringify(window.lastFeatures) !== JSON.stringify(features)) {
-        console.log('🎯 Features detected:', features)
-        window.lastFeatures = features
+      try {
+        // Draw visual grid overlay
+        drawFacialGrid(ctx, landmarks, canvas.width, canvas.height)
+        
+        // Detect features
+        const features = analyzeFeatures(landmarks, canvas.width, canvas.height)
+        
+        // Log features (only when they change)
+        if (!window.lastFeatures || JSON.stringify(window.lastFeatures) !== JSON.stringify(features)) {
+          console.log('🎯 Features detected:', features)
+          window.lastFeatures = features
+        }
+        
+        setDetectedFeatures(features)
+        setFaceDetected(true)
+      } catch (error) {
+        console.error('❌ Error processing face landmarks:', error)
+        console.log('Landmarks that caused error:', {
+          length: landmarks.length,
+          sample: [0, 33, 133, 144, 159, 160].map(i => ({ index: i, exists: !!landmarks[i] }))
+        })
+        setFaceDetected(false)
+        setDetectedFeatures(null)
       }
-      
-      setDetectedFeatures(features)
-      setFaceDetected(true)
     } else {
       // Log when no face detected (throttled)
       const now = Date.now()
@@ -413,8 +428,8 @@ export default function LashMapsScannerPage() {
     drawLine(leftEyeUpper)
     drawLine([...leftEyeLower, leftEyeLower[0]])
     
-    // Left eye key points
-    [33, 133, 160, 144].forEach(i => drawLandmark(i, 4))
+    // Left eye key points (filter out any missing indices)
+    [33, 133, 160, 144].filter(i => landmarks[i]).forEach(i => drawLandmark(i, 4))
 
     // Right eye (in green)
     const rightEyeUpper = [466, 388, 387, 386, 385, 384, 398, 362, 382, 381, 380, 374, 373, 390, 249]
@@ -422,8 +437,8 @@ export default function LashMapsScannerPage() {
     drawLine(rightEyeUpper)
     drawLine([...rightEyeLower, rightEyeLower[0]])
     
-    // Right eye key points
-    [263, 362, 387, 373].forEach(i => drawLandmark(i, 4))
+    // Right eye key points (filter out any missing indices)
+    [263, 362, 387, 373].filter(i => landmarks[i]).forEach(i => drawLandmark(i, 4))
 
     // Eyebrows (in cyan)
     ctx.strokeStyle = 'rgba(100, 255, 255, 0.6)'
