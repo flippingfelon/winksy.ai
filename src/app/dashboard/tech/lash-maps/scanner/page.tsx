@@ -137,9 +137,21 @@ export default function LashMapsScannerPage() {
       // Load MediaPipe scripts
       await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js')
       console.log('✅ Camera utils loaded')
+      console.log('Window.Camera available?', typeof window.Camera)
       
       await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js')
       console.log('✅ Face mesh script loaded')
+      console.log('Window.FaceMesh available?', typeof window.FaceMesh)
+      console.log('Window.FaceMesh value:', window.FaceMesh)
+      
+      // Wait a bit for scripts to fully initialize
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      console.log('After wait - Window.FaceMesh:', typeof window.FaceMesh, window.FaceMesh)
+      
+      if (!window.FaceMesh || typeof window.FaceMesh !== 'function') {
+        throw new Error(`FaceMesh not loaded correctly. Type: ${typeof window.FaceMesh}, Value: ${window.FaceMesh}`)
+      }
       
       console.log('🚀 Step 2: Initializing Face Mesh model...')
       
