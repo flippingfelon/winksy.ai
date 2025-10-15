@@ -474,25 +474,26 @@ export default function LashMapsScannerPage() {
     drawLine(leftEyeUpper)
     drawLine([...leftEyeLower, leftEyeLower[0]])
     
-    // Left eye key points (wrap entire block in try-catch)
+    // Left eye key points (wrap entire block in try-catch) - smaller dots
     try {
       for (const i of [33, 133, 160, 144]) {
-        drawLandmark(i, 4)
+        drawLandmark(i, 1.5)
       }
     } catch (e) {
       // Skip left eye points if error
     }
 
-    // Right eye (in green)
+    // Right eye (in hot pink)
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)' // Hot pink
     const rightEyeUpper = [466, 388, 387, 386, 385, 384, 398, 362, 382, 381, 380, 374, 373, 390, 249]
     const rightEyeLower = [263, 249, 390, 373, 374, 380, 381, 382, 362]
     drawLine(rightEyeUpper)
     drawLine([...rightEyeLower, rightEyeLower[0]])
     
-    // Right eye key points (wrap entire block in try-catch)
+    // Right eye key points (wrap entire block in try-catch) - smaller dots
     try {
       for (const i of [263, 362, 387, 373]) {
-        drawLandmark(i, 4)
+        drawLandmark(i, 1.5)
       }
     } catch (e) {
       // Skip right eye points if error
