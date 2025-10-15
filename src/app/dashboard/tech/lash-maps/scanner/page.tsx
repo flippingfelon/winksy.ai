@@ -777,17 +777,21 @@ export default function LashMapsScannerPage() {
             </div>
             
             <div className="relative aspect-video bg-gray-900">
+              {/* Video Feed */}
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
                 className="w-full h-full object-cover"
+                style={{ transform: 'scaleX(-1)' }}
               />
 
+              {/* Canvas Overlay */}
               <canvas
                 ref={canvasRef}
                 className="absolute inset-0 w-full h-full pointer-events-none"
+                style={{ transform: 'scaleX(-1)' }}
               />
 
               {/* Status Indicator */}
@@ -804,17 +808,23 @@ export default function LashMapsScannerPage() {
                 </div>
               </div>
 
-              {/* Instructions */}
+              {/* Instructions - Compact version */}
               {!faceDetected && (
-                <div className="absolute inset-x-4 top-20 bg-purple-600/95 backdrop-blur-sm rounded-lg p-4 text-center">
-                  <p className="text-white font-semibold mb-2">Position Your Face in Frame</p>
-                  <div className="text-sm text-white/90 space-y-1">
-                    <p>✓ Face the camera directly</p>
-                    <p>✓ Ensure good lighting</p>
-                    <p>✓ Keep your face in the center</p>
-                  </div>
+                <div className="absolute bottom-4 left-4 right-4 bg-purple-600/90 backdrop-blur-sm rounded-lg p-3 text-center shadow-lg">
+                  <p className="text-white font-semibold text-sm flex items-center justify-center gap-2">
+                    <Target className="w-4 h-4" />
+                    Position your face in the center for best results
+                  </p>
                 </div>
               )}
+              
+              {/* Camera Active Indicator */}
+              <div className="absolute top-4 left-4">
+                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-red-500/90 backdrop-blur-sm">
+                  <div className="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                  <span className="text-white text-xs font-semibold">REC</span>
+                </div>
+              </div>
             </div>
 
             {/* Detected Features Display */}
