@@ -1039,7 +1039,7 @@ export default function LashMapsScannerPage() {
               </h2>
             </div>
             
-            <div className="relative bg-gray-900" style={{ minHeight: '650px', maxHeight: '700px' }}>
+            <div className="relative bg-gray-900" style={{ minHeight: '500px', maxHeight: '600px' }}>
               {/* Loading overlay when camera is starting */}
               {hasPermission === null && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900/95 z-10">
@@ -1051,13 +1051,13 @@ export default function LashMapsScannerPage() {
                 </div>
               )}
 
-              {/* Video Feed - object-contain to show full video without cropping */}
+              {/* Video Feed */}
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover"
                 style={{ transform: 'scaleX(-1)' }}
                 onLoadedMetadata={() => {
                   console.log('📹 Video metadata loaded!')
@@ -1068,11 +1068,10 @@ export default function LashMapsScannerPage() {
                 }}
               />
 
-              {/* Canvas Overlay - matches video with object-contain, no mirror transform, we'll flip coordinates in drawing */}
+              {/* Canvas Overlay - no mirror transform, we'll flip coordinates in drawing */}
               <canvas
                 ref={canvasRef}
                 className="absolute inset-0 w-full h-full pointer-events-none"
-                style={{ objectFit: 'contain' }}
               />
 
               {/* Status Indicator */}
