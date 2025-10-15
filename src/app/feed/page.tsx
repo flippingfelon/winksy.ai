@@ -18,6 +18,9 @@ import {
   MoreVertical
 } from 'lucide-react'
 
+// Force dynamic rendering (no static generation at build time)
+export const dynamic = 'force-dynamic'
+
 type FeedFilter = 'for-you' | 'following' | 'techs-only' | 'tutorials'
 
 interface PostWithAuthor extends Post {

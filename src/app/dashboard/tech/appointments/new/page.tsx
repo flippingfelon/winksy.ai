@@ -18,6 +18,9 @@ import {
   Plus
 } from 'lucide-react'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 export default function NewAppointmentPage() {
   const { user } = useAuth()
   const router = useRouter()
