@@ -5,8 +5,8 @@ import { get24HourReminderMessage } from '@/utils/smsTemplates'
 
 export async function GET(request: NextRequest) {
   try {
-    // Initialize Supabase with service role key
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    // Initialize Supabase with service role key (server-side)
+    const supabaseUrl = process.env.SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     
     if (!supabaseUrl || !supabaseServiceKey) {
