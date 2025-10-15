@@ -241,7 +241,7 @@ export default function LashMapsScannerPage() {
       // Wait for video to be ready
       console.log('⏳ Waiting for video metadata to load...')
       await new Promise<void>((resolve) => {
-        if (videoRef.current) {
+          if (videoRef.current) {
           videoRef.current.onloadedmetadata = () => {
             console.log('✅ Video metadata loaded!')
             console.log('   Video size:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)
@@ -399,6 +399,9 @@ export default function LashMapsScannerPage() {
     ctx.fillStyle = 'rgba(236, 72, 153, 0.9)' // Hot pink
     ctx.lineWidth = 2
 
+    // Vertical offset to align mesh with face (negative = up, positive = down)
+    const yOffset = -80 // Shift mesh up by 80 pixels
+
     // Helper function to draw landmarks with safety check
     const drawLandmark = (index: number, size = 3) => {
       try {
@@ -407,8 +410,8 @@ export default function LashMapsScannerPage() {
         if (!landmark || landmark.x === undefined || landmark.y === undefined) return
         
         const x = landmark.x * width
-        const y = landmark.y * height
-        ctx.beginPath()
+        const y = (landmark.y * height) + yOffset
+    ctx.beginPath()
         ctx.arc(x, y, size, 0, 2 * Math.PI)
         ctx.fill()
       } catch (e) {
@@ -436,17 +439,17 @@ export default function LashMapsScannerPage() {
           return
         }
         
-        ctx.beginPath()
+    ctx.beginPath()
         validIndices.forEach((index, i) => {
           const x = landmarks[index].x * width
-          const y = landmarks[index].y * height
-          if (i === 0) {
+          const y = (landmarks[index].y * height) + yOffset
+      if (i === 0) {
             ctx.moveTo(x, y)
-          } else {
+      } else {
             ctx.lineTo(x, y)
-          }
-        })
-        ctx.stroke()
+      }
+    })
+    ctx.stroke()
       } catch (e) {
         // Silently skip this line if any error occurs
       }
@@ -515,7 +518,7 @@ export default function LashMapsScannerPage() {
 
     // Add scanning effect (optional - animated lines)
     const time = Date.now() / 1000
-    const scanY = ((time % 2) / 2) * height
+    const scanY = (((time % 2) / 2) * height) + yOffset
     ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)' // Pink scan line
     ctx.lineWidth = 2
     ctx.beginPath()
@@ -642,7 +645,7 @@ export default function LashMapsScannerPage() {
       sizeConfidence = 0.8
     }
 
-    return {
+        return {
       eyeShape,
       eyeSpacing: eyeSpacingType,
       faceShape,
@@ -680,35 +683,35 @@ export default function LashMapsScannerPage() {
           facialReasons.push('Opens up hooded eyes')
         }
         if (map.category === 'Volume') {
-          score += 15
+        score += 15
           facialReasons.push('Volume counteracts hooded appearance')
-        }
+      }
       }
 
       if (detectedFeatures.eyeShape === 'Almond') {
-        if (map.name.toLowerCase().includes('cat')) {
-          score += 30
+      if (map.name.toLowerCase().includes('cat')) {
+        score += 30
           facialReasons.push('Perfect for almond eye shape')
         }
       }
 
       if (detectedFeatures.eyeShape === 'Round') {
         if (map.name.toLowerCase().includes('cat') || map.name.toLowerCase().includes('elongat')) {
-          score += 25
+      score += 25
           facialReasons.push('Elongates round eyes beautifully')
         }
       }
 
       if (detectedFeatures.eyeShape === 'Downturned') {
         if (map.name.toLowerCase().includes('lift') || map.name.toLowerCase().includes('fox')) {
-          score += 30
+        score += 30
           facialReasons.push('Lifts downturned corners')
-        }
       }
+    }
 
       if (detectedFeatures.eyeSpacing === 'Wide-set') {
         if (map.name.toLowerCase().includes('natural') || !map.name.toLowerCase().includes('cat')) {
-          score += 15
+        score += 15
           facialReasons.push('Balanced for wide-set eyes')
         }
       }
@@ -769,7 +772,7 @@ export default function LashMapsScannerPage() {
       }
 
       if (preferences.looks.includes('wispy')) {
-        if (map.name.toLowerCase().includes('wispy') || map.name.toLowerCase().includes('texture')) {
+      if (map.name.toLowerCase().includes('wispy') || map.name.toLowerCase().includes('texture')) {
           score += 30
           preferenceReasons.push('Wispy texture you wanted')
         }
@@ -866,8 +869,8 @@ export default function LashMapsScannerPage() {
             We need camera access for real-time facial analysis and lash map recommendations.
           </p>
           <div className="space-y-3">
-            <button
-              onClick={startCamera}
+          <button
+            onClick={startCamera}
               className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
             >
               Try Again
@@ -889,7 +892,7 @@ export default function LashMapsScannerPage() {
               className="w-full bg-gray-200 text-gray-700 px-6 py-3 rounded-full font-semibold hover:bg-gray-300 transition-all"
             >
               Test Camera
-            </button>
+          </button>
           </div>
           <p className="text-xs text-gray-500 mt-4">
             Check console (F12) for detailed error messages
@@ -900,28 +903,28 @@ export default function LashMapsScannerPage() {
   }
 
   if (showResults) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-8">
-            <Link
-              href="/dashboard/tech/lash-maps"
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Lash Maps
-            </Link>
-          </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            href="/dashboard/tech/lash-maps"
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Lash Maps
+          </Link>
+        </div>
 
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
               <CheckCircle className="w-10 h-10 text-green-600" />
               Perfect Matches Found!
-            </h1>
-            <p className="text-xl text-gray-600">
+          </h1>
+          <p className="text-xl text-gray-600">
               Based on your facial features and style preferences
-            </p>
-          </div>
+          </p>
+        </div>
 
           {/* Top Recommendations */}
           <div className="mb-8">
@@ -943,7 +946,7 @@ export default function LashMapsScannerPage() {
                     ) : (
                       <div className="w-full h-48 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
                         <Sparkles className="w-16 h-16 text-purple-400" />
-                      </div>
+                </div>
                     )}
                     <div className="absolute top-2 right-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
                       <Star className="w-5 h-5 fill-current" />
@@ -954,7 +957,7 @@ export default function LashMapsScannerPage() {
                         #1 BEST MATCH
                       </div>
                     )}
-                  </div>
+              </div>
 
                   <div className="p-6">
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">{rec.map.name}</h3>
@@ -964,23 +967,23 @@ export default function LashMapsScannerPage() {
                       <div className="bg-purple-50 rounded-lg p-3">
                         <div className="flex items-start gap-2">
                           <Eye className="w-5 h-5 text-purple-600 mt-0.5" />
-                          <div>
+                    <div>
                             <p className="text-xs font-semibold text-purple-900 mb-1">Facial Match:</p>
                             <p className="text-sm text-purple-800">{rec.facialMatch}</p>
-                          </div>
-                        </div>
-                      </div>
+                    </div>
+                    </div>
+                    </div>
                       
                       <div className="bg-pink-50 rounded-lg p-3">
                         <div className="flex items-start gap-2">
                           <Sparkles className="w-5 h-5 text-pink-600 mt-0.5" />
-                          <div>
+                    <div>
                             <p className="text-xs font-semibold text-pink-900 mb-1">Style Match:</p>
                             <p className="text-sm text-pink-800">{rec.preferenceMatch}</p>
-                          </div>
-                        </div>
-                      </div>
                     </div>
+                  </div>
+                  </div>
+                </div>
 
                     <Link
                       href={`/dashboard/tech/lash-maps/${rec.map.id}`}
@@ -992,20 +995,20 @@ export default function LashMapsScannerPage() {
                 </div>
               ))}
             </div>
-          </div>
+            </div>
 
           {/* Try Again Button */}
-          <div className="text-center">
-            <button
+              <div className="text-center">
+                <button
               onClick={resetScanner}
               className="inline-flex items-center gap-2 bg-white text-gray-700 px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
             >
               <RotateCw className="w-5 h-5" />
               Scan Again
-            </button>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
     )
   }
 
@@ -1020,7 +1023,7 @@ export default function LashMapsScannerPage() {
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Lash Maps
           </Link>
-        </div>
+                </div>
 
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
@@ -1030,7 +1033,7 @@ export default function LashMapsScannerPage() {
           <p className="text-xl text-gray-600">
             Real-time facial analysis + your preferences = perfect lash recommendations
           </p>
-        </div>
+                </div>
 
         {/* Main Grid: Camera + Preferences - Camera takes more space */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
@@ -1041,8 +1044,8 @@ export default function LashMapsScannerPage() {
                 <Target className="w-6 h-6" />
                 Live Facial Scan
               </h2>
-            </div>
-            
+                </div>
+
             <div className="relative bg-gray-900" style={{ minHeight: '500px', maxHeight: '600px' }}>
               {/* Loading overlay when camera is starting */}
               {hasPermission === null && (
@@ -1051,7 +1054,7 @@ export default function LashMapsScannerPage() {
                     <div className="animate-spin w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
                     <p className="text-white text-lg font-semibold">Starting Camera...</p>
                     <p className="text-gray-300 text-sm mt-2">Please allow camera access when prompted</p>
-                  </div>
+                </div>
                 </div>
               )}
 
@@ -1089,8 +1092,8 @@ export default function LashMapsScannerPage() {
                   <span className="text-sm font-semibold">
                     {faceDetected ? '✓ Face Detected' : '👀 Looking for face...'}
                   </span>
+                  </div>
                 </div>
-              </div>
 
               {/* Instructions - Compact version */}
               {!faceDetected && hasPermission === true && (
@@ -1099,7 +1102,7 @@ export default function LashMapsScannerPage() {
                     <Target className="w-4 h-4" />
                     Position face in center • Watch the pink mesh track your features
                   </p>
-                  <button
+                <button
                     onClick={() => {
                       console.log('Manual camera restart requested')
                       startCamera()
@@ -1107,10 +1110,10 @@ export default function LashMapsScannerPage() {
                     className="mt-2 text-xs text-white/80 hover:text-white underline"
                   >
                     Camera not working? Click to restart
-                  </button>
-                </div>
-              )}
-              
+                </button>
+          </div>
+        )}
+
               {/* Camera Active Indicator */}
               {hasPermission === true && (
                 <div className="absolute top-4 left-4">
@@ -1128,13 +1131,13 @@ export default function LashMapsScannerPage() {
                 <div>faceDetected: <strong>{faceDetected ? 'YES' : 'NO'}</strong></div>
                 <div>detectedFeatures: <strong>{detectedFeatures ? 'YES' : 'NO'}</strong></div>
                 <div>hasPermission: <strong>{hasPermission ? 'YES' : 'NO'}</strong></div>
-              </div>
+                      </div>
               {detectedFeatures && (
                 <div className="mt-2 text-xs">
                   Features: {JSON.stringify(detectedFeatures, null, 2).slice(0, 100)}...
                 </div>
               )}
-            </div>
+                    </div>
 
             {/* Detected Features Display */}
             {detectedFeatures && faceDetected && (
@@ -1151,35 +1154,35 @@ export default function LashMapsScannerPage() {
                     <span className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getConfidenceColor(detectedFeatures.confidence.eyeShape)}`}>
                       {getConfidenceLabel(detectedFeatures.confidence.eyeShape)} • {Math.round(detectedFeatures.confidence.eyeShape * 100)}%
                     </span>
-                  </div>
+                          </div>
                   
                   <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg p-3">
                     <div className="text-xs text-gray-600 mb-1">Eye Spacing</div>
                     <div className="font-bold text-gray-900 text-lg">{detectedFeatures.eyeSpacing}</div>
                     <span className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getConfidenceColor(detectedFeatures.confidence.eyeSpacing)}`}>
                       {getConfidenceLabel(detectedFeatures.confidence.eyeSpacing)} • {Math.round(detectedFeatures.confidence.eyeSpacing * 100)}%
-                    </span>
-                  </div>
-                  
+                            </span>
+                        </div>
+
                   <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg p-3">
                     <div className="text-xs text-gray-600 mb-1">Face Shape</div>
                     <div className="font-bold text-gray-900 text-lg">{detectedFeatures.faceShape}</div>
                     <span className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getConfidenceColor(detectedFeatures.confidence.faceShape)}`}>
                       {getConfidenceLabel(detectedFeatures.confidence.faceShape)} • {Math.round(detectedFeatures.confidence.faceShape * 100)}%
                     </span>
-                  </div>
-                  
+                      </div>
+
                   <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-lg p-3">
                     <div className="text-xs text-gray-600 mb-1">Eye Size</div>
                     <div className="font-bold text-gray-900 text-lg">{detectedFeatures.eyeSize}</div>
                     <span className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getConfidenceColor(detectedFeatures.confidence.eyeSize)}`}>
                       {getConfidenceLabel(detectedFeatures.confidence.eyeSize)} • {Math.round(detectedFeatures.confidence.eyeSize * 100)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
+                                </span>
+                            </div>
+                          </div>
+                        </div>
             )}
-          </div>
+                      </div>
 
           {/* Preferences Panel */}
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -1215,9 +1218,9 @@ export default function LashMapsScannerPage() {
                     </div>
                     <span className="text-2xl">{option.icon}</span>
                     <span className="font-semibold text-gray-900 flex-1 text-left">{option.label}</span>
-                  </button>
+                        </button>
                 ))}
-              </div>
+                      </div>
 
               <div className="mb-6">
                 <label className="font-bold text-gray-900 mb-3 block">
@@ -1234,11 +1237,11 @@ export default function LashMapsScannerPage() {
                     className="flex-1 h-2 bg-gradient-to-r from-pink-200 to-purple-500 rounded-lg appearance-none cursor-pointer"
                   />
                   <span className="text-sm text-gray-600">Dramatic</span>
-                </div>
+                    </div>
                 <div className="text-center mt-2 text-sm text-purple-600 font-semibold">
                   Level: {preferences.intensity}/10
+                  </div>
                 </div>
-              </div>
 
               <div className="mb-6">
                 <label className="font-bold text-gray-900 mb-2 block">
@@ -1251,9 +1254,9 @@ export default function LashMapsScannerPage() {
                   className="w-full border-2 border-gray-200 rounded-lg p-3 focus:border-purple-500 focus:outline-none resize-none"
                   rows={3}
                 />
-              </div>
+            </div>
 
-              <button
+                <button
                 onClick={generateRecommendations}
                 disabled={!faceDetected || preferences.looks.length === 0}
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
@@ -1266,10 +1269,10 @@ export default function LashMapsScannerPage() {
                 {faceDetected && preferences.looks.length === 0 && (
                   <span className="text-sm font-normal">(Select at least one look)</span>
                 )}
-              </button>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
       </div>
     </div>
   )
