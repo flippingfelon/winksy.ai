@@ -455,7 +455,7 @@ export default function LashMapsScannerPage() {
       }
     }
 
-    // Face oval outline (in pink) - Complete face contour that fits the whole face
+    // Face oval outline (in pink) - Complete face contour with extended forehead
     ctx.strokeStyle = 'rgba(236, 72, 153, 0.7)' // Pink
     ctx.lineWidth = 3
     
@@ -464,7 +464,47 @@ export default function LashMapsScannerPage() {
       10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 
       152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109
     ]
-    drawLine([...completeFaceOval, completeFaceOval[0]]) // Close the loop
+    
+    // Draw face oval with extended forehead (landmarks 10, 338, 297, 332, 109, 67, 103, 54, 21 are top forehead area)
+    const foreheadLandmarks = [10, 338, 297, 332, 109, 67, 103, 54, 21, 162, 127] // Top forehead region
+    const foreheadExtension = -30 // Extra pixels up for forehead only
+    
+    ctx.beginPath()
+    completeFaceOval.forEach((index, i) => {
+      try {
+        if (!(index in landmarks)) return
+        const landmark = landmarks[index]
+        if (!landmark || landmark.x === undefined || landmark.y === undefined) return
+        
+        const x = landmarks[index].x * width
+        // Apply extra offset to forehead landmarks only
+        const extraOffset = foreheadLandmarks.includes(index) ? foreheadExtension : 0
+        const y = (landmarks[index].y * height) + yOffset + extraOffset
+        
+        if (i === 0) {
+          ctx.moveTo(x, y)
+        } else {
+          ctx.lineTo(x, y)
+        }
+      } catch (e) {
+        // Skip this landmark
+      }
+    })
+    // Close the loop
+    if (completeFaceOval.length > 0) {
+      try {
+        const index = completeFaceOval[0]
+        if (index in landmarks && landmarks[index]) {
+          const x = landmarks[index].x * width
+          const extraOffset = foreheadLandmarks.includes(index) ? foreheadExtension : 0
+          const y = (landmarks[index].y * height) + yOffset + extraOffset
+          ctx.lineTo(x, y)
+        }
+      } catch (e) {
+        // Skip closing
+      }
+    }
+    ctx.stroke()
 
     // Left eye (in hot pink)
     ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)' // Hot pink
