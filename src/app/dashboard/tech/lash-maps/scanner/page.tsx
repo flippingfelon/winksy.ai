@@ -395,9 +395,6 @@ export default function LashMapsScannerPage() {
     ctx.fillStyle = 'rgba(236, 72, 153, 0.9)' // Hot pink
     ctx.lineWidth = 2
 
-    // Vertical offset to move grid up (positive = up, negative = down)
-    const yOffset = -60 // Move up by ~1 inch (60 pixels)
-
     // Helper function to draw landmarks with safety check
     const drawLandmark = (index: number, size = 3) => {
       try {
@@ -406,7 +403,7 @@ export default function LashMapsScannerPage() {
         if (!landmark || landmark.x === undefined || landmark.y === undefined) return
         
         const x = landmark.x * width
-        const y = (landmark.y * height) + yOffset
+        const y = landmark.y * height
         ctx.beginPath()
         ctx.arc(x, y, size, 0, 2 * Math.PI)
         ctx.fill()
@@ -438,7 +435,7 @@ export default function LashMapsScannerPage() {
         ctx.beginPath()
         validIndices.forEach((index, i) => {
           const x = landmarks[index].x * width
-          const y = (landmarks[index].y * height) + yOffset
+          const y = landmarks[index].y * height
           if (i === 0) {
             ctx.moveTo(x, y)
           } else {
@@ -514,7 +511,7 @@ export default function LashMapsScannerPage() {
 
     // Add scanning effect (optional - animated lines)
     const time = Date.now() / 1000
-    const scanY = (((time % 2) / 2) * height) + yOffset
+    const scanY = ((time % 2) / 2) * height
     ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)' // Pink scan line
     ctx.lineWidth = 2
     ctx.beginPath()
