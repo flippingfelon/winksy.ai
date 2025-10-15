@@ -115,13 +115,16 @@ export default function LashMapsScannerPage() {
 
   const loadMediaPipe = async () => {
     try {
-      console.log('Loading MediaPipe Face Mesh...')
+      console.log('🚀 Step 1: Loading MediaPipe Face Mesh scripts...')
       
       // Load MediaPipe scripts
       await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js')
-      await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js')
+      console.log('✅ Camera utils loaded')
       
-      console.log('MediaPipe scripts loaded')
+      await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js')
+      console.log('✅ Face mesh script loaded')
+      
+      console.log('🚀 Step 2: Initializing Face Mesh model...')
       
       // Initialize Face Mesh
       const faceMesh = new window.FaceMesh({
@@ -140,16 +143,22 @@ export default function LashMapsScannerPage() {
       faceMesh.onResults(onFaceMeshResults)
       faceMeshRef.current = faceMesh
 
-      console.log('Face Mesh initialized')
+      console.log('✅ Face Mesh initialized, refs ready')
+      console.log('Video ref exists?', !!videoRef.current)
+      console.log('FaceMesh ref exists?', !!faceMeshRef.current)
+      
       setIsLoading(false)
+      console.log('✅ Loading complete, now starting camera...')
       
       // Start camera
       await startCamera()
       
     } catch (error) {
-      console.error('Error loading MediaPipe:', error)
+      console.error('❌ CRITICAL ERROR in loadMediaPipe:', error)
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
       setIsLoading(false)
       setHasPermission(false)
+      alert(`Failed to initialize AI: ${error instanceof Error ? error.message : 'Unknown error'}. Check console for details.`)
     }
   }
 
@@ -171,12 +180,16 @@ export default function LashMapsScannerPage() {
 
   const startCamera = async () => {
     try {
+      console.log('🚀 Step 3: Starting camera...')
+      console.log('Checking refs... Video:', !!videoRef.current, 'FaceMesh:', !!faceMeshRef.current)
+      
       if (!videoRef.current || !faceMeshRef.current) {
-        console.log('❌ Video ref or faceMesh not ready')
-        return
+        console.error('❌ REFS NOT READY! Video:', !!videoRef.current, 'FaceMesh:', !!faceMeshRef.current)
+        throw new Error('Video or FaceMesh ref not ready')
       }
 
-      console.log('🎥 Requesting camera access...')
+      console.log('🎥 Requesting camera permission from browser...')
+      console.log('📱 This should trigger a browser popup asking for camera access')
       
       // Request camera access directly using getUserMedia
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -188,24 +201,30 @@ export default function LashMapsScannerPage() {
         audio: false
       })
 
-      console.log('✅ Camera permission granted!')
-      console.log('📹 Stream obtained:', stream)
+      console.log('✅ Camera permission GRANTED by user!')
+      console.log('📹 Stream obtained, active tracks:', stream.getVideoTracks().length)
+      stream.getVideoTracks().forEach(track => {
+        console.log('  - Track:', track.label, 'enabled:', track.enabled, 'readyState:', track.readyState)
+      })
       
       // Set the stream to the video element
+      console.log('📺 Attaching stream to video element...')
       videoRef.current.srcObject = stream
       
       // Wait for video to be ready
+      console.log('⏳ Waiting for video metadata to load...')
       await new Promise<void>((resolve) => {
         if (videoRef.current) {
           videoRef.current.onloadedmetadata = () => {
-            console.log('📺 Video metadata loaded')
+            console.log('✅ Video metadata loaded!')
+            console.log('   Video size:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)
             resolve()
           }
         }
       })
 
       // Now set up frame processing with MediaPipe
-      console.log('🔄 Setting up frame processing...')
+      console.log('🔄 Setting up continuous frame processing loop...')
       const processFrame = async () => {
         if (videoRef.current && faceMeshRef.current && videoRef.current.readyState === 4) {
           await faceMeshRef.current.send({ image: videoRef.current })
@@ -215,12 +234,18 @@ export default function LashMapsScannerPage() {
       
       processFrame()
       
+      console.log('✅ Setting hasPermission to TRUE')
       setHasPermission(true)
-      console.log('✅ Camera and face detection ready!')
+      console.log('🎉 CAMERA AND FACE DETECTION READY!')
       
     } catch (error) {
-      console.error('❌ Error starting camera:', error)
-      console.error('Error details:', error)
+      console.error('❌ ==================== CAMERA ERROR ====================')
+      console.error('Error object:', error)
+      console.error('Error name:', error instanceof Error ? error.name : 'Unknown')
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown')
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
+      console.error('======================================================')
+      
       setHasPermission(false)
       
       let errorMessage = 'Unable to access camera.'
@@ -236,7 +261,7 @@ export default function LashMapsScannerPage() {
         }
       }
       
-      alert(`Camera Error: ${errorMessage}`)
+      alert(`Camera Error: ${errorMessage}\n\nCheck browser console (F12) for detailed error information.`)
     }
   }
 
@@ -663,16 +688,39 @@ export default function LashMapsScannerPage() {
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 text-center max-w-md">
           <Camera className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Camera Access Required</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Camera Access Denied</h2>
           <p className="text-gray-600 mb-6">
             We need camera access for real-time facial analysis and lash map recommendations.
           </p>
-          <button
-            onClick={startCamera}
-            className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
-          >
-            Allow Camera Access
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={startCamera}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => {
+                console.log('Testing basic camera access...')
+                navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                  .then(stream => {
+                    console.log('✅ Basic camera works!', stream)
+                    alert('Camera works! Reloading page...')
+                    window.location.reload()
+                  })
+                  .catch(err => {
+                    console.error('❌ Basic camera test failed:', err)
+                    alert(`Camera test failed: ${err.message}`)
+                  })
+              }}
+              className="w-full bg-gray-200 text-gray-700 px-6 py-3 rounded-full font-semibold hover:bg-gray-300 transition-all"
+            >
+              Test Camera
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-4">
+            Check console (F12) for detailed error messages
+          </p>
         </div>
       </div>
     )
