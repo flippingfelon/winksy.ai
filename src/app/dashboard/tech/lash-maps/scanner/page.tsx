@@ -997,6 +997,20 @@ export default function LashMapsScannerPage() {
               )}
             </div>
 
+            {/* Debug Info */}
+            <div className="p-4 bg-gray-100 border-t border-gray-200 text-xs font-mono">
+              <div className="grid grid-cols-3 gap-2">
+                <div>faceDetected: <strong>{faceDetected ? 'YES' : 'NO'}</strong></div>
+                <div>detectedFeatures: <strong>{detectedFeatures ? 'YES' : 'NO'}</strong></div>
+                <div>hasPermission: <strong>{hasPermission ? 'YES' : 'NO'}</strong></div>
+              </div>
+              {detectedFeatures && (
+                <div className="mt-2 text-xs">
+                  Features: {JSON.stringify(detectedFeatures, null, 2).slice(0, 100)}...
+                </div>
+              )}
+            </div>
+
             {/* Detected Features Display */}
             {detectedFeatures && faceDetected && (
               <div className="p-6 border-t border-gray-200">
