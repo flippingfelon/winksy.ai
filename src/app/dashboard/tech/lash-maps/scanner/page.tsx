@@ -464,16 +464,14 @@ export default function LashMapsScannerPage() {
     drawLine(leftEyeUpper)
     drawLine([...leftEyeLower, leftEyeLower[0]])
     
-    // Left eye key points (safely check each index)
-    [33, 133, 160, 144].forEach(i => {
-      try {
-        if (i in landmarks && landmarks[i] !== undefined) {
-          drawLandmark(i, 4)
-        }
-      } catch (e) {
-        // Skip this landmark if it causes an error
+    // Left eye key points (wrap entire block in try-catch)
+    try {
+      for (const i of [33, 133, 160, 144]) {
+        drawLandmark(i, 4)
       }
-    })
+    } catch (e) {
+      // Skip left eye points if error
+    }
 
     // Right eye (in green)
     const rightEyeUpper = [466, 388, 387, 386, 385, 384, 398, 362, 382, 381, 380, 374, 373, 390, 249]
@@ -481,16 +479,14 @@ export default function LashMapsScannerPage() {
     drawLine(rightEyeUpper)
     drawLine([...rightEyeLower, rightEyeLower[0]])
     
-    // Right eye key points (safely check each index)
-    [263, 362, 387, 373].forEach(i => {
-      try {
-        if (i in landmarks && landmarks[i] !== undefined) {
-          drawLandmark(i, 4)
-        }
-      } catch (e) {
-        // Skip this landmark if it causes an error
+    // Right eye key points (wrap entire block in try-catch)
+    try {
+      for (const i of [263, 362, 387, 373]) {
+        drawLandmark(i, 4)
       }
-    })
+    } catch (e) {
+      // Skip right eye points if error
+    }
 
     // Eyebrows (in cyan)
     ctx.strokeStyle = 'rgba(100, 255, 255, 0.6)'
