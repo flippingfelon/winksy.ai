@@ -586,7 +586,7 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          image_url: string
+          image_url: string | null
           caption: string | null
           post_type: 'look' | 'tutorial' | 'tip' | 'before-after'
           lash_map_id: string | null
@@ -600,7 +600,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
-          image_url: string
+          image_url?: string | null
           caption?: string | null
           post_type: 'look' | 'tutorial' | 'tip' | 'before-after'
           lash_map_id?: string | null
@@ -614,7 +614,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
-          image_url?: string
+          image_url?: string | null
           caption?: string | null
           post_type?: 'look' | 'tutorial' | 'tip' | 'before-after'
           lash_map_id?: string | null

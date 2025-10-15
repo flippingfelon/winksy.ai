@@ -357,16 +357,18 @@ export default function FeedPage() {
                     </button>
                   </div>
 
-                  {/* Post Image */}
-                  <div className="relative w-full aspect-square bg-gray-100">
-                    <Image
-                      src={post.image_url}
-                      alt={post.caption || 'Lash photo'}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 672px"
-                    />
-                  </div>
+                  {/* Post Image (if present) */}
+                  {post.image_url && (
+                    <div className="relative w-full aspect-square bg-gray-100">
+                      <Image
+                        src={post.image_url}
+                        alt={post.caption || 'Lash photo'}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 672px"
+                      />
+                    </div>
+                  )}
 
                   {/* Post Actions */}
                   <div className="p-4">

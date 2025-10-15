@@ -109,8 +109,18 @@ export default function CreatePostPage() {
       return
     }
 
-    if (!imageFile) {
-      const errorMsg = 'Please select an image to upload'
+    // Images are optional for tips and tutorials, but required for looks and before-after
+    const requiresImage = postType === 'look' || postType === 'before-after'
+    if (requiresImage && !imageFile) {
+      const errorMsg = `${postType === 'look' ? 'Lash looks' : 'Before/After posts'} require an image`
+      console.error('❌', errorMsg)
+      setError(errorMsg)
+      return
+    }
+
+    // For text-only posts, require a caption
+    if (!imageFile && !caption.trim()) {
+      const errorMsg = 'Please add a caption or upload an image'
       console.error('❌', errorMsg)
       setError(errorMsg)
       return
@@ -120,46 +130,55 @@ export default function CreatePostPage() {
     setUploadProgress(10)
 
     try {
-      // Upload image to Supabase Storage
-      console.log('📤 Uploading image to Supabase Storage...')
-      const fileExt = imageFile.name.split('.').pop()
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`
-      const filePath = `posts/${fileName}`
+      let publicUrl: string | null = null
 
-      console.log('File path:', filePath)
-      setUploadProgress(30)
+      // Upload image if provided
+      if (imageFile) {
+        console.log('📤 Uploading image to Supabase Storage...')
+        const fileExt = imageFile.name.split('.').pop()
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`
+        const filePath = `posts/${fileName}`
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('feed-images')
-        .upload(filePath, imageFile, {
-          cacheControl: '3600',
-          upsert: false
-        })
+        console.log('File path:', filePath)
+        setUploadProgress(30)
 
-      if (uploadError) {
-        console.error('❌ Upload error:', uploadError)
-        
-        // If bucket doesn't exist, show helpful error
-        if (uploadError.message.includes('not found') || uploadError.message.includes('Bucket')) {
-          const errorMsg = '⚠️ Storage bucket "feed-images" doesn\'t exist yet!\n\nPlease create it in Supabase:\n1. Go to Storage in Supabase Dashboard\n2. Click "New Bucket"\n3. Name: feed-images\n4. Public bucket: Yes\n5. Click "Create bucket"'
-          console.error(errorMsg)
-          setError('Storage bucket not set up. Check console for instructions.')
-          setLoading(false)
-          return
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('feed-images')
+          .upload(filePath, imageFile, {
+            cacheControl: '3600',
+            upsert: false
+          })
+
+        if (uploadError) {
+          console.error('❌ Upload error:', uploadError)
+          
+          // If bucket doesn't exist, show helpful error
+          if (uploadError.message.includes('not found') || uploadError.message.includes('Bucket')) {
+            const errorMsg = '⚠️ Storage bucket "feed-images" doesn\'t exist yet!\n\nPlease create it in Supabase:\n1. Go to Storage in Supabase Dashboard\n2. Click "New Bucket"\n3. Name: feed-images\n4. Public bucket: Yes\n5. Click "Create bucket"'
+            console.error(errorMsg)
+            setError('Storage bucket not set up. Check console for instructions.')
+            setLoading(false)
+            return
+          }
+          
+          throw new Error(`Upload failed: ${uploadError.message}`)
         }
-        
-        throw new Error(`Upload failed: ${uploadError.message}`)
+
+        console.log('✅ Image uploaded successfully:', uploadData)
+        setUploadProgress(60)
+
+        // Get public URL
+        const { data: { publicUrl: url } } = supabase.storage
+          .from('feed-images')
+          .getPublicUrl(filePath)
+
+        publicUrl = url
+        console.log('📸 Public URL:', publicUrl)
+      } else {
+        console.log('📝 Creating text-only post (no image)')
+        setUploadProgress(60)
       }
-
-      console.log('✅ Image uploaded successfully:', uploadData)
-      setUploadProgress(60)
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('feed-images')
-        .getPublicUrl(filePath)
-
-      console.log('📸 Public URL:', publicUrl)
+      
       setUploadProgress(70)
 
       // Create post
@@ -252,7 +271,7 @@ export default function CreatePostPage() {
               </h1>
               <button
                 onClick={handleSubmit}
-                disabled={loading || !imageFile}
+                disabled={loading || (!imageFile && !caption.trim())}
                 className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-shadow"
               >
                 {loading ? 'Posting...' : 'Post'}
@@ -305,7 +324,19 @@ export default function CreatePostPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Image Upload */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold mb-4">Upload Photo</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Upload Photo</h3>
+                {(postType === 'tip' || postType === 'tutorial') && (
+                  <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    Optional for {postType === 'tip' ? 'tips' : 'tutorials'}
+                  </span>
+                )}
+                {(postType === 'look' || postType === 'before-after') && (
+                  <span className="text-xs text-purple-600 bg-purple-50 px-3 py-1 rounded-full font-medium">
+                    Required
+                  </span>
+                )}
+              </div>
               
               {imagePreview ? (
                 <div className="relative">
@@ -463,7 +494,7 @@ export default function CreatePostPage() {
             {/* Submit Button (Mobile) */}
             <button
               type="submit"
-              disabled={loading || !imageFile}
+              disabled={loading || (!imageFile && !caption.trim())}
               className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {loading ? (
