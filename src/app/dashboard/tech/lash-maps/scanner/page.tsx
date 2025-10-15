@@ -99,6 +99,14 @@ export default function LashMapsScannerPage() {
     }
   }, [])
 
+  // Start camera after loading is complete and video element is in DOM
+  useEffect(() => {
+    if (!isLoading && hasPermission === null && videoRef.current && faceMeshRef.current) {
+      console.log('🎬 Video element now in DOM, starting camera...')
+      startCamera()
+    }
+  }, [isLoading, hasPermission])
+
   const loadLashMaps = async () => {
     try {
       const { data, error } = await supabase
@@ -143,15 +151,13 @@ export default function LashMapsScannerPage() {
       faceMesh.onResults(onFaceMeshResults)
       faceMeshRef.current = faceMesh
 
-      console.log('✅ Face Mesh initialized, refs ready')
-      console.log('Video ref exists?', !!videoRef.current)
+      console.log('✅ Face Mesh initialized')
       console.log('FaceMesh ref exists?', !!faceMeshRef.current)
       
+      console.log('✅ MediaPipe loading complete!')
+      console.log('⏳ Setting isLoading to false, which will render video element...')
       setIsLoading(false)
-      console.log('✅ Loading complete, now starting camera...')
-      
-      // Start camera
-      await startCamera()
+      console.log('📺 Video element should now render, camera will start in separate effect...')
       
     } catch (error) {
       console.error('❌ CRITICAL ERROR in loadMediaPipe:', error)
