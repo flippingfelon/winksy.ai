@@ -307,10 +307,14 @@ export default function LashMapsScannerPage() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Set canvas size to match video
-    if (videoRef.current) {
-      canvas.width = videoRef.current.videoWidth
-      canvas.height = videoRef.current.videoHeight
+    // Set canvas internal size to match its displayed size (not raw video size)
+    // This ensures the overlay aligns properly with the CSS-scaled video
+    const displayWidth = canvas.clientWidth
+    const displayHeight = canvas.clientHeight
+    
+    if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+      canvas.width = displayWidth
+      canvas.height = displayHeight
     }
 
     // Save context state
