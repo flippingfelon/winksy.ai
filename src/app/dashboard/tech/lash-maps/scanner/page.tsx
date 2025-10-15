@@ -379,37 +379,55 @@ export default function LashMapsScannerPage() {
 
     // Helper function to draw landmarks with safety check
     const drawLandmark = (index: number, size = 3) => {
-      if (!landmarks[index]) {
-        console.warn(`⚠️ Missing landmark at index ${index}`)
-        return
+      try {
+        if (!(index in landmarks)) return
+        const landmark = landmarks[index]
+        if (!landmark || landmark.x === undefined || landmark.y === undefined) return
+        
+        const x = landmark.x * width
+        const y = landmark.y * height
+        ctx.beginPath()
+        ctx.arc(x, y, size, 0, 2 * Math.PI)
+        ctx.fill()
+      } catch (e) {
+        // Silently skip this landmark if any error occurs
       }
-      const x = landmarks[index].x * width
-      const y = landmarks[index].y * height
-      ctx.beginPath()
-      ctx.arc(x, y, size, 0, 2 * Math.PI)
-      ctx.fill()
     }
 
     // Helper function to draw line between landmarks with safety check
     const drawLine = (indices: number[]) => {
-      // Check if all landmarks exist
-      const allExist = indices.every(index => landmarks[index])
-      if (!allExist) {
-        console.warn(`⚠️ Missing landmarks in line:`, indices.filter(i => !landmarks[i]))
-        return
-      }
-      
-      ctx.beginPath()
-      indices.forEach((index, i) => {
-        const x = landmarks[index].x * width
-        const y = landmarks[index].y * height
-        if (i === 0) {
-          ctx.moveTo(x, y)
-        } else {
-          ctx.lineTo(x, y)
+      try {
+        // Safely check if all landmarks exist without throwing
+        const validIndices: number[] = []
+        for (const index of indices) {
+          try {
+            if (index in landmarks && landmarks[index] && landmarks[index].x !== undefined) {
+              validIndices.push(index)
+            }
+          } catch (e) {
+            // Skip this index if it causes an error
+          }
         }
-      })
-      ctx.stroke()
+        
+        if (validIndices.length < 2) {
+          // Need at least 2 points to draw a line
+          return
+        }
+        
+        ctx.beginPath()
+        validIndices.forEach((index, i) => {
+          const x = landmarks[index].x * width
+          const y = landmarks[index].y * height
+          if (i === 0) {
+            ctx.moveTo(x, y)
+          } else {
+            ctx.lineTo(x, y)
+          }
+        })
+        ctx.stroke()
+      } catch (e) {
+        // Silently skip this line if any error occurs
+      }
     }
 
     // Face oval outline (in cyan)
